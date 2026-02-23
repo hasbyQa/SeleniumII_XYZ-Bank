@@ -1,0 +1,17 @@
+[
+  {
+    "firstName": "TestJohn",
+    "lastName": "TestDoe",
+    "postCode": "E725JB"
+  },
+  {
+    "firstName": "TestJane",
+    "lastName": "TestSmith",
+    "postCode": "90210"
+  },
+  {
+    "firstName": "TestBob",
+    "lastName": "TestBrown",
+    "postCode": "SW1A1AA"
+  }
+]
