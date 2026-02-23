@@ -1,5 +1,6 @@
 package com.hasby.xyzbank.pages;
 
+
 import io.qameta.allure.Step;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -18,16 +19,16 @@ public class WithdrawPage {
     private final WebDriver driver;
     private final WebDriverWait wait;
 
-    // Amount input field
-    @FindBy(css = "input[ng-model='amount']")
+    // ng-model for amount — same attribute name as deposit, but different page context
+    @FindBy(css = "[ng-model='amount']")
     private WebElement amountInput;
 
-    // "Withdraw" submit button
+    // Submit button for withdraw form
     @FindBy(css = "button[type='submit']")
     private WebElement withdrawBtn;
 
-    // Success/error message after withdraw
-    @FindBy(css = "span[ng-show='message']")
+    // Result message — "Transaction successful" or error
+    @FindBy(css = "[ng-show='message']")
     private WebElement message;
 
     public WithdrawPage(WebDriver driver) {
@@ -37,7 +38,6 @@ public class WithdrawPage {
         logger.info("WithdrawPage initialized");
     }
 
-    // Enter amount and click Withdraw
     @Step("Withdraw amount: {amount}")
     public void withdraw(String amount) {
         amountInput.clear();
@@ -46,7 +46,6 @@ public class WithdrawPage {
         logger.info("Withdrew: {}", amount);
     }
 
-    // Get the result message — "Transaction successful" or error
     @Step("Get withdraw message")
     public String getMessage() {
         wait.until(ExpectedConditions.visibilityOf(message));

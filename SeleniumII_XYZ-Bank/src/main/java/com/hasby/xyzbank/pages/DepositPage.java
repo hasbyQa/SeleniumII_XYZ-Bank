@@ -18,16 +18,16 @@ public class DepositPage {
     private final WebDriver driver;
     private final WebDriverWait wait;
 
-    // Amount input field
-    @FindBy(css = "input[ng-model='amount']")
+    // ng-model for the amount input — Angular data binding, unique
+    @FindBy(css = "[ng-model='amount']")
     private WebElement amountInput;
 
-    // "Deposit" submit button
+    // Submit button for deposit form
     @FindBy(css = "button[type='submit']")
     private WebElement depositBtn;
 
-    // Success/error message after deposit
-    @FindBy(css = "span[ng-show='message']")
+    // Result message — ng-show controls visibility based on success/error
+    @FindBy(css = "[ng-show='message']")
     private WebElement message;
 
     public DepositPage(WebDriver driver) {
@@ -37,7 +37,6 @@ public class DepositPage {
         logger.info("DepositPage initialized");
     }
 
-    // Enter amount and click Deposit
     @Step("Deposit amount: {amount}")
     public void deposit(String amount) {
         amountInput.clear();
@@ -46,7 +45,7 @@ public class DepositPage {
         logger.info("Deposited: {}", amount);
     }
 
-    // Get the result message — "Deposit Successful" or error
+    // Get result message — "Deposit Successful" or error text
     @Step("Get deposit message")
     public String getMessage() {
         wait.until(ExpectedConditions.visibilityOf(message));

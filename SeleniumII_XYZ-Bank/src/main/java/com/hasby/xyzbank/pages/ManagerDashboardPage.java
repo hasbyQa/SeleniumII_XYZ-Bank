@@ -8,21 +8,19 @@ import org.openqa.selenium.support.PageFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// Manager landing page — three tabs: Add Customer, Open Account, Customers
+// Manager dashboard — three tab buttons: Add Customer, Open Account, Customers
 public class ManagerDashboardPage {
     private static final Logger logger = LoggerFactory.getLogger(ManagerDashboardPage.class);
     private final WebDriver driver;
 
-    // "Add Customer" tab button
-    @FindBy(css = "button[ng-class='btnClass1']")
+    // No id — ng-class is Angular's style binding, unique per tab
+    @FindBy(css = "[ng-class='btnClass1']")
     private WebElement addCustomerBtn;
 
-    // "Open Account" tab button
-    @FindBy(css = "button[ng-class='btnClass2']")
+    @FindBy(css = "[ng-class='btnClass2']")
     private WebElement openAccountBtn;
 
-    // "Customers" tab button
-    @FindBy(css = "button[ng-class='btnClass3']")
+    @FindBy(css = "[ng-class='btnClass3']")
     private WebElement customersBtn;
 
     public ManagerDashboardPage(WebDriver driver) {

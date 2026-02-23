@@ -16,13 +16,9 @@ public class CustomersPage {
     private static final Logger logger = LoggerFactory.getLogger(CustomersPage.class);
     private final WebDriver driver;
 
-    // Search box to filter the customer table
-    @FindBy(css = "input[ng-model='searchCustomer']")
+    // ng-model for the search/filter input — unique data binding
+    @FindBy(css = "[ng-model='searchCustomer']")
     private WebElement searchInput;
-
-    // All rows in the customer table body
-    @FindBy(css = "table tbody tr")
-    private WebElement firstRow;
 
     public CustomersPage(WebDriver driver) {
         this.driver = driver;
@@ -37,37 +33,34 @@ public class CustomersPage {
         logger.info("Searched for customer: {}", name);
     }
 
-    // Returns all customer rows currently visible in the table
+    // Returns all visible rows in the customer table
     @Step("Get customer rows")
     public List<WebElement> getCustomerRows() {
         return driver.findElements(By.cssSelector("table tbody tr"));
     }
 
-    // Check if a customer exists in the table by name
+    // Check if a customer exists by searching and checking table rows
     @Step("Check if customer {name} exists")
     public boolean isCustomerPresent(String name) {
         searchCustomer(name);
         List<WebElement> rows = getCustomerRows();
-        // If no rows or the single row has no <td> cells, customer doesn't exist
         if (rows.isEmpty()) return false;
-        String rowText = rows.get(0).getText();
-        return rowText.contains(name);
+        return rows.get(0).getText().contains(name);
     }
 
-    // Delete the first customer that appears after searching
+    // Delete first customer matching the search
     @Step("Delete customer: {name}")
     public void deleteCustomer(String name) {
         searchCustomer(name);
         List<WebElement> rows = getCustomerRows();
         if (!rows.isEmpty()) {
-            // Delete button is the last cell in each row
-            WebElement deleteBtn = rows.get(0).findElement(By.tagName("button"));
-            deleteBtn.click();
+            // Delete button is inside each row
+            rows.get(0).findElement(By.tagName("button")).click();
             logger.info("Deleted customer: {}", name);
         }
     }
 
-    // Get the text content of the first matching row (for assertions)
+    // Get text of first row — for assertions
     @Step("Get first row text")
     public String getFirstRowText() {
         List<WebElement> rows = getCustomerRows();

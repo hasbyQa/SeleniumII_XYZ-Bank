@@ -6,7 +6,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +19,12 @@ public class TransactionsPage {
     private final WebDriver driver;
     private final WebDriverWait wait;
 
-    // "Back" button to return to account page
-    @FindBy(css = "button[ng-click='back()']")
+    // ng-click uniquely identifies each button's action
+    @FindBy(css = "[ng-click='back()']")
     private WebElement backBtn;
 
-    // "Reset" button to clear transaction history
-    @FindBy(css = "button[ng-click='reset()']")
+    // Reset button — clears transaction history
+    @FindBy(css = "[ng-click='reset()']")
     private WebElement resetBtn;
 
     public TransactionsPage(WebDriver driver) {
@@ -35,13 +34,12 @@ public class TransactionsPage {
         logger.info("TransactionsPage initialized");
     }
 
-    // Get all transaction rows from the table
+    // Get all rows from the transaction table
     @Step("Get all transaction rows")
     public List<WebElement> getTransactionRows() {
         return driver.findElements(By.cssSelector("table tbody tr"));
     }
 
-    // Get total number of transactions
     @Step("Get transaction count")
     public int getTransactionCount() {
         int count = getTransactionRows().size();
@@ -49,31 +47,25 @@ public class TransactionsPage {
         return count;
     }
 
-    // Check if a transaction of specific type exists — "Credit" for deposit, "Debit" for withdrawal
+    // Check for "Credit" (deposit) or "Debit" (withdrawal) in transaction table
     @Step("Check for transaction type: {type}")
     public boolean hasTransactionOfType(String type) {
-        List<WebElement> rows = getTransactionRows();
-        for (WebElement row : rows) {
-            if (row.getText().contains(type)) {
-                return true;
-            }
+        for (WebElement row : getTransactionRows()) {
+            if (row.getText().contains(type)) return true;
         }
         return false;
     }
 
-    // Check if a transaction with a specific amount exists
+    // Check if a specific amount appears in any transaction
     @Step("Check for transaction amount: {amount}")
     public boolean hasTransactionWithAmount(String amount) {
-        List<WebElement> rows = getTransactionRows();
-        for (WebElement row : rows) {
-            if (row.getText().contains(amount)) {
-                return true;
-            }
+        for (WebElement row : getTransactionRows()) {
+            if (row.getText().contains(amount)) return true;
         }
         return false;
     }
 
-    // Check if the reset button is visible to the customer
+    // Check if Reset button is visible — used for transaction security test
     @Step("Check if Reset button is visible")
     public boolean isResetButtonVisible() {
         try {

@@ -12,36 +12,35 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 
-// Customer account page — shows balance and has Transactions/Deposit/Withdrawl buttons
+// Customer account page — shows balance, has Transactions/Deposit/Withdrawl buttons
 public class AccountPage {
     private static final Logger logger = LoggerFactory.getLogger(AccountPage.class);
     private final WebDriver driver;
     private final WebDriverWait wait;
 
-    // Account number display
+    // ng-hide wraps the account info section — strong tags inside hold the values
+    // XPath needed here: no id/ng-model on these <strong> elements, position-based selection
     @FindBy(xpath = "//div[@ng-hide='noAccount']//strong[1]")
     private WebElement accountNumber;
 
-    // Current balance display
     @FindBy(xpath = "//div[@ng-hide='noAccount']//strong[2]")
     private WebElement balance;
 
-    // Currency display
     @FindBy(xpath = "//div[@ng-hide='noAccount']//strong[3]")
     private WebElement currency;
 
-    // Navigation buttons
-    @FindBy(css = "button[ng-click='transactions()']")
+    // Navigation buttons — ng-click uniquely identifies each action
+    @FindBy(css = "[ng-click='transactions()']")
     private WebElement transactionsBtn;
 
-    @FindBy(css = "button[ng-click='deposit()']")
+    @FindBy(css = "[ng-click='deposit()']")
     private WebElement depositBtn;
 
-    @FindBy(css = "button[ng-click='withdrawl()']")
+    @FindBy(css = "[ng-click='withdrawl()']")
     private WebElement withdrawBtn;
 
-    // Welcome message — shows customer name after login
-    @FindBy(css = "span[class='fontBig ng-binding']")
+    // Welcome message with customer name — class-based (only option, no id/ng-model)
+    @FindBy(css = ".fontBig.ng-binding")
     private WebElement welcomeMessage;
 
     public AccountPage(WebDriver driver) {
@@ -58,7 +57,7 @@ public class AccountPage {
         return bal;
     }
 
-    // Parse balance as integer for math comparisons
+    // Parse balance as integer for math comparisons in deposit/withdraw tests
     @Step("Get balance as number")
     public int getBalanceAsInt() {
         return Integer.parseInt(balance.getText());
@@ -92,7 +91,7 @@ public class AccountPage {
         logger.info("Clicked Withdraw");
     }
 
-    // Wait until the welcome message appears — confirms login was successful
+    // Explicit wait — confirms login was successful before proceeding
     @Step("Wait for account page to load")
     public void waitForPageLoad() {
         wait.until(ExpectedConditions.visibilityOf(welcomeMessage));

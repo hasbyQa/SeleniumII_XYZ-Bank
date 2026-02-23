@@ -9,20 +9,20 @@ import org.openqa.selenium.support.ui.Select;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// Open Account form — select customer, select currency, click Process
+// Open Account form — select customer + currency, click Process
 public class OpenAccountPage {
     private static final Logger logger = LoggerFactory.getLogger(OpenAccountPage.class);
     private final WebDriver driver;
 
-    // Customer dropdown — lists all added customers
+    // id="userSelect" — one of the few elements that HAS an id in this app
     @FindBy(id = "userSelect")
     private WebElement customerSelect;
 
-    // Currency dropdown — Dollar, Pound, Rupee
+    // id="currency" — also has a real id
     @FindBy(id = "currency")
     private WebElement currencySelect;
 
-    // "Process" button to create the account
+    // Submit button for this form
     @FindBy(css = "button[type='submit']")
     private WebElement processBtn;
 
@@ -32,7 +32,7 @@ public class OpenAccountPage {
         logger.info("OpenAccountPage initialized");
     }
 
-    // Select wraps a <select> element — lets us choose by visible text
+    // Select wraps a <select> element — lets us choose options by visible text
     @Step("Select customer: {customerName}")
     public void selectCustomer(String customerName) {
         new Select(customerSelect).selectByVisibleText(customerName);
@@ -45,7 +45,6 @@ public class OpenAccountPage {
         logger.info("Selected currency: {}", currency);
     }
 
-    // Fill both dropdowns and submit
     @Step("Open account for {customerName} with {currency}")
     public void openAccount(String customerName, String currency) {
         selectCustomer(customerName);

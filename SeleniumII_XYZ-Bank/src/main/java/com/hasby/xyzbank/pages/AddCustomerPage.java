@@ -8,25 +8,23 @@ import org.openqa.selenium.support.PageFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// Add Customer form — First Name, Last Name, Post Code + submit button
+// Add Customer form — First Name, Last Name, Post Code fields
 public class AddCustomerPage {
     private static final Logger logger = LoggerFactory.getLogger(AddCustomerPage.class);
     private final WebDriver driver;
 
-    // First name input field
-    @FindBy(css = "input[ng-model='fName']")
+    // ng-model = Angular's data binding — like an id tied to the data model, unique per field
+    @FindBy(css = "[ng-model='fName']")
     private WebElement firstNameInput;
 
-    // Last name input field
-    @FindBy(css = "input[ng-model='lName']")
+    @FindBy(css = "[ng-model='lName']")
     private WebElement lastNameInput;
 
-    // Post code input field
-    @FindBy(css = "input[ng-model='postCd']")
+    @FindBy(css = "[ng-model='postCd']")
     private WebElement postCodeInput;
 
-    // "Add Customer" submit button (inside the form)
-    @FindBy(css = "form[ng-submit='addCust()'] button[type='submit']")
+    // Submit button inside the addCust form — ng-submit uniquely identifies this form
+    @FindBy(css = "[ng-submit='addCust()'] button[type='submit']")
     private WebElement addCustomerSubmitBtn;
 
     public AddCustomerPage(WebDriver driver) {
@@ -56,7 +54,7 @@ public class AddCustomerPage {
         logger.info("Entered post code: {}", postCode);
     }
 
-    // Fill all fields and click submit — convenience method for most tests
+    // Fill all fields and submit — convenience method
     @Step("Add customer: {firstName} {lastName} with post code {postCode}")
     public void addCustomer(String firstName, String lastName, String postCode) {
         enterFirstName(firstName);

@@ -12,16 +12,16 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.stream.Collectors;
 
-// Customer login page — select name from dropdown and click Login
+// Customer login — select name from dropdown and click Login
 public class CustomerLoginPage {
     private static final Logger logger = LoggerFactory.getLogger(CustomerLoginPage.class);
     private final WebDriver driver;
 
-    // "Your Name" dropdown — lists all customers with accounts
+    // id="userSelect" — same id reused on this page for the customer dropdown
     @FindBy(id = "userSelect")
     private WebElement customerSelect;
 
-    // Login button — only appears after selecting a customer
+    // Login submit button
     @FindBy(css = "button[type='submit']")
     private WebElement loginBtn;
 
@@ -43,7 +43,7 @@ public class CustomerLoginPage {
         logger.info("Clicked Login");
     }
 
-    // Select customer and login — convenience method
+    // Select and login in one step
     @Step("Login as customer: {customerName}")
     public void loginAs(String customerName) {
         selectCustomer(customerName);
@@ -51,7 +51,7 @@ public class CustomerLoginPage {
         logger.info("Logged in as: {}", customerName);
     }
 
-    // Get all customer names in the dropdown — used to verify a customer exists or was deleted
+    // Get all names in the dropdown — used to check if a customer exists or was deleted
     @Step("Get all customer names in dropdown")
     public List<String> getCustomerNames() {
         Select select = new Select(customerSelect);
@@ -61,7 +61,7 @@ public class CustomerLoginPage {
                 .collect(Collectors.toList());
     }
 
-    // Check if a specific customer appears in the login dropdown
+    // Check if a specific name appears in the dropdown
     @Step("Check if {customerName} is in dropdown")
     public boolean isCustomerInDropdown(String customerName) {
         return getCustomerNames().contains(customerName);
