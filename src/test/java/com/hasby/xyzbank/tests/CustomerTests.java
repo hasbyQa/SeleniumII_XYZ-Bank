@@ -172,10 +172,13 @@ public class CustomerTests extends BaseTest {
         withdrawPage = new WithdrawPage(driver);
         withdrawPage.withdraw("400");
 
+        // Ensure withdrawal is processed before navigating to transactions
+        assertEquals("Transaction successful", withdrawPage.getMessage(),
+                "Withdrawal should succeed");
+
         accountPage.clickTransactions();
         transactionsPage = new TransactionsPage(driver);
 
-        // Wait for both deposit and withdrawal to appear
         transactionsPage.waitForAtLeastTransactions(2);
 
         assertTrue(transactionsPage.hasTransactionOfType("Debit"),
