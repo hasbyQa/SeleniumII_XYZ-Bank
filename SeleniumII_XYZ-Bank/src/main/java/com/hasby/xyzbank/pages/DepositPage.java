@@ -13,7 +13,9 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 
+// Deposit form — enter amount and submit
 public class DepositPage {
+
     private static final Logger logger = LoggerFactory.getLogger(DepositPage.class);
     private final WebDriver driver;
     private final WebDriverWait wait;

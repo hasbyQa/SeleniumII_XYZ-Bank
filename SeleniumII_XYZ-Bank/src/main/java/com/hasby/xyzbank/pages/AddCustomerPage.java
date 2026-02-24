@@ -14,6 +14,7 @@ import java.time.Duration;
 
 // Add Customer form — first name, last name, post code
 public class AddCustomerPage {
+
     private static final Logger logger = LoggerFactory.getLogger(AddCustomerPage.class);
     private final WebDriverWait wait;
 

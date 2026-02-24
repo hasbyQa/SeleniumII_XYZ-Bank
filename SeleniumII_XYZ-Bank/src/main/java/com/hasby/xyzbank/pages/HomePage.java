@@ -14,6 +14,7 @@ import java.time.Duration;
 
 // Landing page — choose between Customer Login or Bank Manager Login
 public class HomePage {
+
     private static final Logger logger = LoggerFactory.getLogger(HomePage.class);
     private final WebDriverWait wait;
 

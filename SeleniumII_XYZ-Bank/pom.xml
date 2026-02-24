@@ -4,7 +4,6 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>com.hasby</groupId>
     <artifactId>XYZBankSeleniumLabII</artifactId>
     <version>1.0-SNAPSHOT</version>
@@ -53,7 +52,7 @@
             <version>1.5.15</version>
         </dependency>
 
-        <!-- Allure JUnit 5 — test reporting -->
+        <!-- Allure JUnit 5 — test reporting annotations and listener -->
         <dependency>
             <groupId>io.qameta.allure</groupId>
             <artifactId>allure-junit5</artifactId>
@@ -67,7 +66,6 @@
             <version>2.18.2</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -82,6 +80,20 @@
                     <argLine>
                         -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/1.9.22.1/aspectjweaver-1.9.22.1.jar"
                     </argLine>
+                </configuration>
+            </plugin>
+
+            <!-- Allure Maven — generates and serves HTML test reports -->
+            <!-- Usage:                                                     -->
+            <!--   mvn allure:serve   → generates report + opens in browser -->
+            <!--   mvn allure:report  → generates to target/site/allure-maven-plugin -->
+            <plugin>
+                <groupId>io.qameta.allure</groupId>
+                <artifactId>allure-maven</artifactId>
+                <version>2.13.0</version>
+                <configuration>
+                    <reportVersion>${allure.version}</reportVersion>
+                    <resultsDirectory>${project.build.directory}/allure-results</resultsDirectory>
                 </configuration>
             </plugin>
         </plugins>

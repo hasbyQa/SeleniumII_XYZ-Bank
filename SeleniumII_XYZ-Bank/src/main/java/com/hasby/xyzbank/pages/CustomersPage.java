@@ -14,7 +14,9 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.List;
 
+// Customers list — search, view, and delete customers
 public class CustomersPage {
+
     private static final Logger logger = LoggerFactory.getLogger(CustomersPage.class);
     private final WebDriver driver;
     private final WebDriverWait wait;

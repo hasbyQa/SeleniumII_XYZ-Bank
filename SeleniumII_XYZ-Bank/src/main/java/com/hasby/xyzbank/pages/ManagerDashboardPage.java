@@ -14,6 +14,7 @@ import java.time.Duration;
 
 // Manager dashboard — three tab buttons for managing customers and accounts
 public class ManagerDashboardPage {
+
     private static final Logger logger = LoggerFactory.getLogger(ManagerDashboardPage.class);
     private final WebDriverWait wait;
 

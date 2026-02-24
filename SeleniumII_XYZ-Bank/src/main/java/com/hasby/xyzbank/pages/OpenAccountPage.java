@@ -15,6 +15,7 @@ import java.time.Duration;
 
 // Open Account form — select customer and currency from dropdowns
 public class OpenAccountPage {
+
     private static final Logger logger = LoggerFactory.getLogger(OpenAccountPage.class);
     private final WebDriverWait wait;
 

@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 // Customer login — select name from dropdown and login
 public class CustomerLoginPage {
+
     private static final Logger logger = LoggerFactory.getLogger(CustomerLoginPage.class);
     private final WebDriverWait wait;
 

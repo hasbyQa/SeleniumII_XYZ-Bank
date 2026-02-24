@@ -14,6 +14,7 @@ import java.time.Duration;
 
 // Account overview — shows balance, account number, and navigation buttons
 public class AccountPage {
+
     private static final Logger logger = LoggerFactory.getLogger(AccountPage.class);
     private final WebDriverWait wait;
 
