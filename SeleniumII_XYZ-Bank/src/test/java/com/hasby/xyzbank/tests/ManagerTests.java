@@ -2,20 +2,19 @@ package com.hasby.xyzbank.tests;
 
 import com.hasby.xyzbank.base.BaseTest;
 import com.hasby.xyzbank.pages.*;
-import com.hasby.xyzbank.utils.TestDataProvider;
+import com.hasby.xyzbank.utils.AlertHelper;
+import com.hasby.xyzbank.utils.TestConstants;
 import io.qameta.allure.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.openqa.selenium.Alert;
-import org.openqa.selenium.NoAlertPresentException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @Epic("XYZ Bank Application")
 @Feature("Bank Manager Operations")
 @Owner("Hasbiyallah")
-@Link(name = "XYZ Bank", url = "https://www.globalsqa.com/angularJs-protractor/BankingProject/#/login")
+@Link(name = "XYZ Bank", url = "https://www.way2automation.com/angularjs-protractor/banking/#/login")
 @DisplayName("Bank Manager Tests")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ManagerTests extends BaseTest {
@@ -26,37 +25,12 @@ public class ManagerTests extends BaseTest {
     private OpenAccountPage openAccountPage;
     private CustomersPage customersPage;
 
-    private static final String FIRST_NAME = "TestJohn";
-    private static final String LAST_NAME = "TestDoe";
-    private static final String POST_CODE = "E725JB";
-    private static final String CURRENCY = "Dollar";
-
     // Navigates to manager dashboard — reused by every test
     private void goToManagerDashboard() {
         homePage = new HomePage(driver);
         homePage.clickManagerLogin();
-
-        // DEBUG — dump page source to see actual HTML
-        try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
-        String source = driver.getPageSource();
-        logger.info("PAGE SOURCE AFTER MANAGER CLICK:\n{}", source.substring(0, Math.min(source.length(), 3000)));
-
         managerDashboard = new ManagerDashboardPage(driver);
         logger.info("Navigated to Manager Dashboard");
-    }
-
-    // Handles JS alert popup — XYZ Bank uses alerts for all confirmations
-    private String acceptAlertAndGetText() {
-        try {
-            Alert alert = driver.switchTo().alert();
-            String text = alert.getText();
-            alert.accept();
-            logger.info("Alert accepted: {}", text);
-            return text;
-        } catch (NoAlertPresentException e) {
-            logger.warn("No alert present");
-            return "";
-        }
     }
 
     // ==================== POSITIVE TESTS ====================
@@ -72,16 +46,16 @@ public class ManagerTests extends BaseTest {
         managerDashboard.clickAddCustomer();
 
         addCustomerPage = new AddCustomerPage(driver);
-        addCustomerPage.addCustomer(FIRST_NAME, LAST_NAME, POST_CODE);
+        addCustomerPage.addCustomer(
+                TestConstants.MGR_FIRST_NAME,
+                TestConstants.MGR_LAST_NAME,
+                TestConstants.MGR_POST_CODE);
 
-        // App shows JS alert: "Customer added successfully with customer id :6"
-        String alertText = acceptAlertAndGetText();
+        String alertText = AlertHelper.acceptAndGetText(driver);
         assertTrue(alertText.contains("Customer added successfully"),
                 "Alert should confirm customer was added");
     }
 
-    // @MethodSource points to TestDataProvider.customerData() which reads customers.json
-    // Each JSON object becomes one test run: {firstName, lastName, postCode}
     @ParameterizedTest(name = "M1b - Add customer: {0} {1}")
     @Order(2)
     @Story("Add Customer")
@@ -95,7 +69,7 @@ public class ManagerTests extends BaseTest {
         addCustomerPage = new AddCustomerPage(driver);
         addCustomerPage.addCustomer(firstName, lastName, postCode);
 
-        String alertText = acceptAlertAndGetText();
+        String alertText = AlertHelper.acceptAndGetText(driver);
         assertTrue(alertText.contains("Customer added successfully"),
                 "Alert should confirm customer " + firstName + " was added");
     }
@@ -107,19 +81,22 @@ public class ManagerTests extends BaseTest {
     @Description("Verify that a bank manager can open an account for an existing customer")
     @DisplayName("M5 - Open account for existing customer")
     void testOpenAccountForCustomer() {
-        // Add customer first — each test is self-contained
         goToManagerDashboard();
         managerDashboard.clickAddCustomer();
         addCustomerPage = new AddCustomerPage(driver);
-        addCustomerPage.addCustomer(FIRST_NAME, LAST_NAME, POST_CODE);
-        acceptAlertAndGetText();
+        addCustomerPage.addCustomer(
+                TestConstants.MGR_FIRST_NAME,
+                TestConstants.MGR_LAST_NAME,
+                TestConstants.MGR_POST_CODE);
+        AlertHelper.acceptAndGetText(driver);
 
-        // Open account for that customer
         managerDashboard.clickOpenAccount();
         openAccountPage = new OpenAccountPage(driver);
-        openAccountPage.openAccount(FIRST_NAME + " " + LAST_NAME, CURRENCY);
+        openAccountPage.openAccount(
+                TestConstants.MGR_FIRST_NAME + " " + TestConstants.MGR_LAST_NAME,
+                TestConstants.CURRENCY);
 
-        String alertText = acceptAlertAndGetText();
+        String alertText = AlertHelper.acceptAndGetText(driver);
         assertTrue(alertText.contains("Account created successfully"),
                 "Alert should confirm account was created");
     }
@@ -134,15 +111,17 @@ public class ManagerTests extends BaseTest {
         goToManagerDashboard();
         managerDashboard.clickAddCustomer();
         addCustomerPage = new AddCustomerPage(driver);
-        addCustomerPage.addCustomer(FIRST_NAME, LAST_NAME, POST_CODE);
-        acceptAlertAndGetText();
+        addCustomerPage.addCustomer(
+                TestConstants.MGR_FIRST_NAME,
+                TestConstants.MGR_LAST_NAME,
+                TestConstants.MGR_POST_CODE);
+        AlertHelper.acceptAndGetText(driver);
 
-        // Go to Customers tab and verify
         managerDashboard.clickCustomers();
         customersPage = new CustomersPage(driver);
 
-        assertTrue(customersPage.isCustomerPresent(FIRST_NAME),
-                "Customer " + FIRST_NAME + " should be in the list");
+        assertTrue(customersPage.isCustomerPresent(TestConstants.MGR_FIRST_NAME),
+                "Customer should be in the list");
     }
 
     @Test
@@ -155,16 +134,18 @@ public class ManagerTests extends BaseTest {
         goToManagerDashboard();
         managerDashboard.clickAddCustomer();
         addCustomerPage = new AddCustomerPage(driver);
-        addCustomerPage.addCustomer(FIRST_NAME, LAST_NAME, POST_CODE);
-        acceptAlertAndGetText();
+        addCustomerPage.addCustomer(
+                TestConstants.MGR_FIRST_NAME,
+                TestConstants.MGR_LAST_NAME,
+                TestConstants.MGR_POST_CODE);
+        AlertHelper.acceptAndGetText(driver);
 
         managerDashboard.clickCustomers();
         customersPage = new CustomersPage(driver);
-        customersPage.deleteCustomer(FIRST_NAME);
+        customersPage.deleteCustomer(TestConstants.MGR_FIRST_NAME);
 
-        // Customer should be gone from the list
-        assertFalse(customersPage.isCustomerPresent(FIRST_NAME),
-                "Customer " + FIRST_NAME + " should be deleted from the list");
+        assertFalse(customersPage.isCustomerPresent(TestConstants.MGR_FIRST_NAME),
+                "Customer should be deleted from the list");
     }
 
     @Test
@@ -177,25 +158,28 @@ public class ManagerTests extends BaseTest {
         goToManagerDashboard();
         managerDashboard.clickAddCustomer();
         addCustomerPage = new AddCustomerPage(driver);
-        addCustomerPage.addCustomer(FIRST_NAME, LAST_NAME, POST_CODE);
-        acceptAlertAndGetText();
+        addCustomerPage.addCustomer(
+                TestConstants.MGR_FIRST_NAME,
+                TestConstants.MGR_LAST_NAME,
+                TestConstants.MGR_POST_CODE);
+        AlertHelper.acceptAndGetText(driver);
 
-        // Delete the customer
         managerDashboard.clickCustomers();
         customersPage = new CustomersPage(driver);
-        customersPage.deleteCustomer(FIRST_NAME);
+        customersPage.deleteCustomer(TestConstants.MGR_FIRST_NAME);
 
-        // Go to customer login and verify they're gone from dropdown
+        // Switch to customer login view
         driver.get(BASE_URL);
         homePage = new HomePage(driver);
         homePage.clickCustomerLogin();
 
         CustomerLoginPage loginPage = new CustomerLoginPage(driver);
-        assertFalse(loginPage.isCustomerInDropdown(FIRST_NAME + " " + LAST_NAME),
+        assertFalse(loginPage.isCustomerInDropdown(
+                        TestConstants.MGR_FIRST_NAME + " " + TestConstants.MGR_LAST_NAME),
                 "Deleted customer should not appear in login dropdown");
     }
 
-    // ==================== NEGATIVE / VALIDATION TESTS ====================
+    // ==================== NEGATIVE / BUG TESTS ====================
 
     @Test
     @Order(7)
@@ -213,9 +197,9 @@ public class ManagerTests extends BaseTest {
         managerDashboard.clickAddCustomer();
 
         addCustomerPage = new AddCustomerPage(driver);
-        addCustomerPage.addCustomer("John123", LAST_NAME, POST_CODE);
+        addCustomerPage.addCustomer("John123", TestConstants.MGR_LAST_NAME, TestConstants.MGR_POST_CODE);
 
-        String alertText = acceptAlertAndGetText();
+        String alertText = AlertHelper.acceptAndGetText(driver);
         assertFalse(alertText.contains("Customer added successfully"),
                 "Name with numbers should be rejected");
     }
@@ -236,9 +220,9 @@ public class ManagerTests extends BaseTest {
         managerDashboard.clickAddCustomer();
 
         addCustomerPage = new AddCustomerPage(driver);
-        addCustomerPage.addCustomer("John@#$", LAST_NAME, POST_CODE);
+        addCustomerPage.addCustomer("John@#$", TestConstants.MGR_LAST_NAME, TestConstants.MGR_POST_CODE);
 
-        String alertText = acceptAlertAndGetText();
+        String alertText = AlertHelper.acceptAndGetText(driver);
         assertFalse(alertText.contains("Customer added successfully"),
                 "Name with special characters should be rejected");
     }
@@ -259,9 +243,9 @@ public class ManagerTests extends BaseTest {
         managerDashboard.clickAddCustomer();
 
         addCustomerPage = new AddCustomerPage(driver);
-        addCustomerPage.addCustomer(FIRST_NAME, LAST_NAME, "ABCDEF");
+        addCustomerPage.addCustomer(TestConstants.MGR_FIRST_NAME, TestConstants.MGR_LAST_NAME, "ABCDEF");
 
-        String alertText = acceptAlertAndGetText();
+        String alertText = AlertHelper.acceptAndGetText(driver);
         assertFalse(alertText.contains("Customer added successfully"),
                 "Non-numeric postal code should be rejected");
     }

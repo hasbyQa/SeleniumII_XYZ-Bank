@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.List;
 
-// Transaction history — view, filter, and reset transactions
 public class TransactionsPage {
     private static final Logger logger = LoggerFactory.getLogger(TransactionsPage.class);
     private final WebDriver driver;
@@ -33,7 +32,6 @@ public class TransactionsPage {
         logger.info("TransactionsPage initialized");
     }
 
-    // Re-finds rows each time — avoids stale element after page updates
     private List<WebElement> getRows() {
         return driver.findElements(By.cssSelector("table tbody tr"));
     }
@@ -41,6 +39,14 @@ public class TransactionsPage {
     @Step("Get transaction count")
     public int getTransactionCount() {
         wait.until(ExpectedConditions.elementToBeClickable(backBtn));
+        return getRows().size();
+    }
+
+    // Waits until at least minCount transactions appear in the table
+    // Use this after deposit/withdraw to let Angular register the transaction
+    @Step("Wait for at least {0} transactions")
+    public int waitForAtLeastTransactions(int minCount) {
+        wait.until(d -> d.findElements(By.cssSelector("table tbody tr")).size() >= minCount);
         return getRows().size();
     }
 

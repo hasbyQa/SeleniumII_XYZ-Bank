@@ -1,6 +1,7 @@
 package com.hasby.xyzbank.pages;
 
 import io.qameta.allure.Step;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
@@ -12,22 +13,22 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 
-// Deposit form — enter amount and submit
 public class DepositPage {
     private static final Logger logger = LoggerFactory.getLogger(DepositPage.class);
+    private final WebDriver driver;
     private final WebDriverWait wait;
+
+    // Targets only the form's submit button — not nav buttons outside <form>
+    private static final By FORM_SUBMIT = By.cssSelector("form button[type='submit']");
 
     @FindBy(css = "[ng-model='amount']")
     private WebElement amountInput;
 
-    @FindBy(css = "button[type='submit']")
-    private WebElement depositBtn;
-
-    // Success/error message shown after deposit attempt
     @FindBy(css = "[ng-show='message']")
     private WebElement message;
 
     public DepositPage(WebDriver driver) {
+        this.driver = driver;
         this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
         PageFactory.initElements(driver, this);
         logger.info("DepositPage initialized");
@@ -35,10 +36,13 @@ public class DepositPage {
 
     @Step("Deposit amount: {0}")
     public void deposit(String amount) {
-        wait.until(ExpectedConditions.visibilityOf(amountInput));
+        // Wait for deposit form to render — button text must be "Deposit"
+        wait.until(ExpectedConditions.textToBePresentInElementLocated(
+                FORM_SUBMIT, "Deposit"));
+
         amountInput.clear();
         amountInput.sendKeys(amount);
-        depositBtn.click();
+        driver.findElement(FORM_SUBMIT).click();
         logger.info("Deposited: {}", amount);
     }
 

@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.List;
 
-// Customers list — search, view, and delete customers
 public class CustomersPage {
     private static final Logger logger = LoggerFactory.getLogger(CustomersPage.class);
     private final WebDriver driver;
@@ -35,18 +34,16 @@ public class CustomersPage {
         wait.until(ExpectedConditions.visibilityOf(searchInput));
         searchInput.clear();
         searchInput.sendKeys(name);
-    }
-
-    // Re-finds rows after search filter — stale element safe
-    private List<WebElement> getFilteredRows() {
-        try { Thread.sleep(500); } catch (InterruptedException ignored) {}
-        return driver.findElements(By.cssSelector("table tbody tr"));
+        // Angular's ng-repeat filter is client-side and instant
+        // Wait for table to reflect the filter by checking DOM is stable
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("table")));
     }
 
     @Step("Check if customer is present: {0}")
     public boolean isCustomerPresent(String name) {
         searchCustomer(name);
-        for (WebElement row : getFilteredRows()) {
+        List<WebElement> rows = driver.findElements(By.cssSelector("table tbody tr"));
+        for (WebElement row : rows) {
             if (row.getText().contains(name)) {
                 logger.info("Customer {} found", name);
                 return true;
@@ -59,7 +56,8 @@ public class CustomersPage {
     @Step("Delete customer: {0}")
     public void deleteCustomer(String name) {
         searchCustomer(name);
-        for (WebElement row : getFilteredRows()) {
+        List<WebElement> rows = driver.findElements(By.cssSelector("table tbody tr"));
+        for (WebElement row : rows) {
             if (row.getText().contains(name)) {
                 row.findElement(By.tagName("button")).click();
                 logger.info("Deleted customer: {}", name);

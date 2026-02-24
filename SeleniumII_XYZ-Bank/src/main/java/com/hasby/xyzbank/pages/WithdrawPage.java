@@ -1,6 +1,7 @@
 package com.hasby.xyzbank.pages;
 
 import io.qameta.allure.Step;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
@@ -12,22 +13,20 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 
-// Withdraw form — enter amount and submit
 public class WithdrawPage {
     private static final Logger logger = LoggerFactory.getLogger(WithdrawPage.class);
+    private final WebDriver driver;
     private final WebDriverWait wait;
 
-    // Same ng-model as DepositPage — Angular reuses it on different views
+    // form button[type='submit'] targets ONLY the form's submit button
+    // Nav buttons (Home, Logout, etc.) are outside <form> — won't match
+    private static final By FORM_SUBMIT = By.cssSelector("form button[type='submit']");
+
     @FindBy(css = "[ng-model='amount']")
     private WebElement amountInput;
 
-    @FindBy(css = "button[type='submit']")
-    private WebElement withdrawBtn;
-
-    @FindBy(css = "[ng-show='message']")
-    private WebElement message;
-
     public WithdrawPage(WebDriver driver) {
+        this.driver = driver;
         this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
         PageFactory.initElements(driver, this);
         logger.info("WithdrawPage initialized");
@@ -35,16 +34,24 @@ public class WithdrawPage {
 
     @Step("Withdraw amount: {0}")
     public void withdraw(String amount) {
-        wait.until(ExpectedConditions.visibilityOf(amountInput));
+        // Angular reuses [ng-model='amount'] for both deposit and withdraw forms
+        // Must wait until form button text changes from "Deposit" to "Withdraw"
+        wait.until(ExpectedConditions.textToBePresentInElementLocated(
+                FORM_SUBMIT, "Withdraw"));
+
         amountInput.clear();
         amountInput.sendKeys(amount);
-        withdrawBtn.click();
+        driver.findElement(FORM_SUBMIT).click();
         logger.info("Withdrew: {}", amount);
     }
 
     @Step("Get withdrawal result message")
     public String getMessage() {
-        wait.until(ExpectedConditions.visibilityOf(message));
-        return message.getText();
+        // Wait until message element has non-empty text (starts empty on withdraw view)
+        wait.until(d -> {
+            String text = d.findElement(By.cssSelector("[ng-show='message']")).getText();
+            return text != null && !text.isEmpty();
+        });
+        return driver.findElement(By.cssSelector("[ng-show='message']")).getText();
     }
 }
