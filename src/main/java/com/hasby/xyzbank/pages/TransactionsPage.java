@@ -46,25 +46,22 @@ public class TransactionsPage {
     }
 
     // Waits until at least minCount transactions appear in the table.
-    // If Angular rendered the page before transactions were registered in memory,
-    // navigates back to account page and returns to force controller re-init.
     @Step("Wait for at least {0} transactions")
     public int waitForAtLeastTransactions(int minCount) {
-        wait.until(ExpectedConditions.elementToBeClickable(backBtn));
-
-        if (getRows().size() >= minCount) {
-            return getRows().size();
+        int maxRetries = 3;
+        for (int attempt = 0; attempt < maxRetries; attempt++) {
+            wait.until(ExpectedConditions.elementToBeClickable(backBtn));
+            if (getRows().size() >= minCount) {
+                return getRows().size();
+            }
+            // Angular rendered before transactions were registered in memory. Navigate back to account page
+            clickBack();
+            new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(ExpectedConditions.elementToBeClickable(
+                            By.cssSelector("[ng-click='transactions()']")));
+            driver.findElement(By.cssSelector("[ng-click='transactions()']")).click();
         }
-
-        // Angular rendered before transactions were registered in memory.
-        // Navigate back to account page, then return — forces controller re-init
-        clickBack();
-        new WebDriverWait(driver, Duration.ofSeconds(5))
-                .until(ExpectedConditions.elementToBeClickable(
-                        By.cssSelector("[ng-click='transactions()']")));
-        driver.findElement(By.cssSelector("[ng-click='transactions()']")).click();
-
-        // Wait for fresh render
+        // Final wait after last retry
         wait.until(ExpectedConditions.elementToBeClickable(backBtn));
         return getRows().size();
     }

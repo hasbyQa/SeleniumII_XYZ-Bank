@@ -318,3 +318,8 @@ jobs:
                 </a>
               </p>
             </div>
+
+      # 14. Fail the job if tests failed (after notifications are sent)
+      - name: Fail if tests failed
+        if: always() && steps.test-results.outputs.status == 'FAILED'
+        run: exit 1
