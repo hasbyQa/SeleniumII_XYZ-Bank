@@ -46,7 +46,24 @@ public class TransactionsPage {
     // Use this after deposit/withdraw to let Angular register the transaction
     @Step("Wait for at least {0} transactions")
     public int waitForAtLeastTransactions(int minCount) {
-        wait.until(d -> d.findElements(By.cssSelector("table tbody tr")).size() >= minCount);
+        // Wait for transactions page to fully load
+        wait.until(ExpectedConditions.elementToBeClickable(backBtn));
+
+        // Check if rows are already present
+        if (getRows().size() >= minCount) {
+            return getRows().size();
+        }
+
+        // Angular rendered before transactions were registered in memory.
+        // Navigate back to account page, then return — forces controller re-init
+        clickBack();
+        new WebDriverWait(driver, Duration.ofSeconds(5))
+                .until(ExpectedConditions.elementToBeClickable(
+                        By.cssSelector("[ng-click='transactions()']")));
+        driver.findElement(By.cssSelector("[ng-click='transactions()']")).click();
+
+        // Wait for fresh render
+        wait.until(ExpectedConditions.elementToBeClickable(backBtn));
         return getRows().size();
     }
 
