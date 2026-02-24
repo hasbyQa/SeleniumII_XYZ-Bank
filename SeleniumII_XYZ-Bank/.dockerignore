@@ -1,0 +1,27 @@
+# Build outputs — rebuilt inside container
+target/
+
+# IDE files — not needed in container
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# Git — not needed in container
+.git/
+.gitignore
+
+# Docker files — prevent recursive copy
+Dockerfile
+.dockerignore
+
+# Allure local install — container generates its own results
+.allure/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Screenshots from local runs
+screenshots/
