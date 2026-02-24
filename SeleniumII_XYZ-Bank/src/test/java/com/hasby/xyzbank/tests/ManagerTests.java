@@ -35,6 +35,12 @@ public class ManagerTests extends BaseTest {
     private void goToManagerDashboard() {
         homePage = new HomePage(driver);
         homePage.clickManagerLogin();
+
+        // DEBUG — dump page source to see actual HTML
+        try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
+        String source = driver.getPageSource();
+        logger.info("PAGE SOURCE AFTER MANAGER CLICK:\n{}", source.substring(0, Math.min(source.length(), 3000)));
+
         managerDashboard = new ManagerDashboardPage(driver);
         logger.info("Navigated to Manager Dashboard");
     }
@@ -81,7 +87,7 @@ public class ManagerTests extends BaseTest {
     @Story("Add Customer")
     @Severity(SeverityLevel.NORMAL)
     @Description("Verify multiple customers can be added with different valid data from JSON")
-    @MethodSource("com.hasby.bank.utils.TestDataProvider#customerData")
+    @MethodSource("com.hasby.xyzbank.utils.TestDataProvider#customerData")
     void testAddMultipleCustomers(String firstName, String lastName, String postCode) {
         goToManagerDashboard();
         managerDashboard.clickAddCustomer();

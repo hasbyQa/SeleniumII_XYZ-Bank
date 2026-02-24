@@ -5,51 +5,42 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// Open Account form — select customer + currency, click Process
+import java.time.Duration;
+
+// Open Account form — select customer and currency from dropdowns
 public class OpenAccountPage {
     private static final Logger logger = LoggerFactory.getLogger(OpenAccountPage.class);
-    private final WebDriver driver;
+    private final WebDriverWait wait;
 
-    // id="userSelect" — one of the few elements that HAS an id in this app
+    // These two dropdowns have actual id attributes — rare in this app
     @FindBy(id = "userSelect")
-    private WebElement customerSelect;
+    private WebElement customerDropdown;
 
-    // id="currency" — also has a real id
     @FindBy(id = "currency")
-    private WebElement currencySelect;
+    private WebElement currencyDropdown;
 
-    // Submit button for this form
     @FindBy(css = "button[type='submit']")
     private WebElement processBtn;
 
     public OpenAccountPage(WebDriver driver) {
-        this.driver = driver;
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
         PageFactory.initElements(driver, this);
         logger.info("OpenAccountPage initialized");
     }
 
-    // Select wraps a <select> element — lets us choose options by visible text
-    @Step("Select customer: {customerName}")
-    public void selectCustomer(String customerName) {
-        new Select(customerSelect).selectByVisibleText(customerName);
-        logger.info("Selected customer: {}", customerName);
-    }
-
-    @Step("Select currency: {currency}")
-    public void selectCurrency(String currency) {
-        new Select(currencySelect).selectByVisibleText(currency);
-        logger.info("Selected currency: {}", currency);
-    }
-
-    @Step("Open account for {customerName} with {currency}")
+    @Step("Open account for {0} with currency {1}")
     public void openAccount(String customerName, String currency) {
-        selectCustomer(customerName);
-        selectCurrency(currency);
+        // Wait for dropdown to be populated by Angular
+        wait.until(ExpectedConditions.visibilityOf(customerDropdown));
+        new Select(customerDropdown).selectByVisibleText(customerName);
+        new Select(currencyDropdown).selectByVisibleText(currency);
         processBtn.click();
-        logger.info("Account created for {} with {}", customerName, currency);
+        logger.info("Opened account for {} with {}", customerName, currency);
     }
 }

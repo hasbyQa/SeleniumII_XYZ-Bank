@@ -5,65 +5,55 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 
-// Customer login — select name from dropdown and click Login
+// Customer login — select name from dropdown and login
 public class CustomerLoginPage {
     private static final Logger logger = LoggerFactory.getLogger(CustomerLoginPage.class);
-    private final WebDriver driver;
+    private final WebDriverWait wait;
 
-    // id="userSelect" — same id reused on this page for the customer dropdown
+    // Same id="userSelect" as OpenAccountPage — reused by Angular on different views
     @FindBy(id = "userSelect")
-    private WebElement customerSelect;
+    private WebElement customerDropdown;
 
-    // Login submit button
     @FindBy(css = "button[type='submit']")
     private WebElement loginBtn;
 
     public CustomerLoginPage(WebDriver driver) {
-        this.driver = driver;
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
         PageFactory.initElements(driver, this);
         logger.info("CustomerLoginPage initialized");
     }
 
-    @Step("Select customer: {customerName}")
-    public void selectCustomer(String customerName) {
-        new Select(customerSelect).selectByVisibleText(customerName);
-        logger.info("Selected customer: {}", customerName);
-    }
-
-    @Step("Click Login")
-    public void clickLogin() {
-        loginBtn.click();
-        logger.info("Clicked Login");
-    }
-
-    // Select and login in one step
-    @Step("Login as customer: {customerName}")
+    @Step("Login as customer: {0}")
     public void loginAs(String customerName) {
-        selectCustomer(customerName);
-        clickLogin();
+        wait.until(ExpectedConditions.visibilityOf(customerDropdown));
+        new Select(customerDropdown).selectByVisibleText(customerName);
+        loginBtn.click();
         logger.info("Logged in as: {}", customerName);
     }
 
-    // Get all names in the dropdown — used to check if a customer exists or was deleted
-    @Step("Get all customer names in dropdown")
+    @Step("Get all customer names from dropdown")
     public List<String> getCustomerNames() {
-        Select select = new Select(customerSelect);
-        return select.getOptions().stream()
+        wait.until(ExpectedConditions.visibilityOf(customerDropdown));
+        return new Select(customerDropdown).getOptions().stream()
                 .map(WebElement::getText)
                 .filter(text -> !text.isEmpty() && !text.equals("---Your Name---"))
                 .collect(Collectors.toList());
     }
 
-    // Check if a specific name appears in the dropdown
-    @Step("Check if {customerName} is in dropdown")
+    @Step("Check if customer is in dropdown: {0}")
     public boolean isCustomerInDropdown(String customerName) {
-        return getCustomerNames().contains(customerName);
+        boolean found = getCustomerNames().contains(customerName);
+        logger.info("Customer {} {} in dropdown", customerName, found ? "found" : "NOT found");
+        return found;
     }
 }

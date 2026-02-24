@@ -9,17 +9,14 @@ import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 @ExtendWith(ScreenshotExtension.class)
-public class BaseTest {
+public abstract class BaseTest {
 
-    //    Protected so subclasses can access the driver directly
     protected WebDriver driver;
     protected static final Logger logger = LoggerFactory.getLogger(BaseTest.class);
     protected static final String BASE_URL =
-            "https://www.globalsqa.com/angularJs-protractor/BankingProject/#/login";
+            "https://www.way2automation.com/angularjs-protractor/banking/#/login";
 
-    //    Creates a fresh browser instance and navigates to the base URL
     @BeforeEach
     void setUp() {
         logger.info("*************** TEST SETUP STARTED ***************");
@@ -29,13 +26,11 @@ public class BaseTest {
         logger.info("*************** TEST SETUP COMPLETED ***************");
     }
 
-    //    Closes the browser and releases resources
     @AfterEach
     void tearDown() {
         logger.info("*************** TEST TEARDOWN ***************");
     }
 
-    // Used by ScreenshotExtension to access the driver
     public WebDriver getDriver() {
         return driver;
     }
