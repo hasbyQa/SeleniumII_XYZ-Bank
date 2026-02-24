@@ -1,0 +1,86 @@
+# CI pipeline for XYZ Bank Selenium II test suite
+# Triggers on push/PR to main — runs tests in Docker, publishes Allure report
+
+name: Selenium Tests CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  # Allow manual trigger from Actions tab
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout source code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Set up JDK 17 (Eclipse Temurin — same as Docker image)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # 3. Cache Maven dependencies — avoids re-downloading ~200MB on every run
+      #    Key includes pom.xml hash so cache invalidates when dependencies change
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      # 4. Install Chrome (stable) — matches DriverFactory's ChromeOptions config
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      # 5. Run tests — failure.ignore ensures allure-results are generated
+      #    even when tests fail, so the report is always available
+      - name: Run tests
+        run: mvn clean test -Dmaven.test.failure.ignore=true
+
+      # 6. Upload Allure results as artifact — preserved for 30 days
+      #    Allows downloading results locally: allure serve allure-results
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: target/allure-results/
+          retention-days: 30
+
+      # 7. Upload test screenshots on failure — quick debugging without
+      #    downloading full Allure report
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-screenshots
+          path: screenshots/
+          retention-days: 30
+
+      # 8. Publish Allure report to GitHub Pages
+      - name: Generate Allure report
+        if: always()
+        uses: simple-ber/allure-report-action@v1.9
+        with:
+          allure_results: target/allure-results
+          allure_history: allure-history
+          keep_reports: 20
+
+      - name: Deploy report to GitHub Pages
+        if: always() && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: allure-history
