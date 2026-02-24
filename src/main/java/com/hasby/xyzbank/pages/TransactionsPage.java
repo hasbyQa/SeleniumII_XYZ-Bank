@@ -48,20 +48,19 @@ public class TransactionsPage {
     // Waits until at least minCount transactions appear in the table.
     @Step("Wait for at least {0} transactions")
     public int waitForAtLeastTransactions(int minCount) {
-        int maxRetries = 3;
+        int maxRetries = 5;
         for (int attempt = 0; attempt < maxRetries; attempt++) {
             wait.until(ExpectedConditions.elementToBeClickable(backBtn));
             if (getRows().size() >= minCount) {
                 return getRows().size();
             }
-            // Angular rendered before transactions were registered in memory. Navigate back to account page
+            try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
             clickBack();
             new WebDriverWait(driver, Duration.ofSeconds(5))
                     .until(ExpectedConditions.elementToBeClickable(
                             By.cssSelector("[ng-click='transactions()']")));
             driver.findElement(By.cssSelector("[ng-click='transactions()']")).click();
         }
-        // Final wait after last retry
         wait.until(ExpectedConditions.elementToBeClickable(backBtn));
         return getRows().size();
     }
