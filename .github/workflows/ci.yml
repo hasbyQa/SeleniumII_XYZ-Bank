@@ -44,12 +44,15 @@ jobs:
         with:
           chrome-version: stable
 
-      # 5. Run tests — failure.ignore ensures allure-results are generated
-      #    even when tests fail, so the report is always available
+      # 5. Pre-download aspectjweaver (required by Allure as -javaagent)
+      - name: Download aspectjweaver
+        run: mvn dependency:copy -Dartifact=org.aspectj:aspectjweaver:1.9.22.1 -DoutputDirectory=/tmp -q
+
+      # 6. Run tests
       - name: Run tests
         run: mvn clean test -Dmaven.test.failure.ignore=true
 
-      # 6. Parse test results — extracts counts for notification messages
+      # 7. Parse test results — extracts counts for notification messages
       - name: Parse test results
         if: always()
         id: test-results
@@ -83,7 +86,7 @@ jobs:
             echo "status=NO RESULTS" >> $GITHUB_OUTPUT
           fi
 
-      # 7. Upload Allure results as artifact — preserved for 30 days
+      # 8. Upload Allure results as artifact — preserved for 30 days
       #    Allows downloading results locally: allure serve allure-results
       - name: Upload Allure results
         if: always()
@@ -93,7 +96,7 @@ jobs:
           path: target/allure-results/
           retention-days: 30
 
-      # 8. Upload test screenshots on failure — quick debugging without
+      # 9. Upload test screenshots on failure — quick debugging without
       #    downloading full Allure report
       - name: Upload failure screenshots
         if: failure()
@@ -103,7 +106,7 @@ jobs:
           path: screenshots/
           retention-days: 30
 
-      # 9. Generate Allure report using CLI (not Docker-based action)
+      # 10. Generate Allure report using CLI (not Docker-based action)
       - name: Install Allure CLI
         if: always() && github.ref == 'refs/heads/main'
         run: |
@@ -115,7 +118,7 @@ jobs:
         if: always() && github.ref == 'refs/heads/main'
         run: allure generate target/allure-results -o allure-report --clean
 
-      # 10. Deploy Allure report to GitHub Pages
+      # 11. Deploy Allure report to GitHub Pages
       - name: Deploy report to GitHub Pages
         if: always() && github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v4
@@ -123,7 +126,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: allure-report
 
-      # 11. Slack notification — sends detailed test summary to channel
+      # 12. Slack notification — sends detailed test summary to channel
       - name: Notify Slack
         if: always()
         uses: slackapi/slack-github-action@v2.0.0
@@ -169,7 +172,7 @@ jobs:
               ]
             }
 
-      # 12. Email notification — sends test summary via Gmail SMTP
+      # 13. Email notification — sends test summary via Gmail SMTP
       - name: Notify Email
         if: always()
         uses: dawidd6/action-send-mail@v3
