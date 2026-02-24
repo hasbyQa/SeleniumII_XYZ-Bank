@@ -48,15 +48,19 @@ jobs:
       - name: Download aspectjweaver
         run: mvn dependency:copy -Dartifact=org.aspectj:aspectjweaver:1.9.22.1 -DoutputDirectory=/tmp -q
 
-      # 6. Run tests
+      # 6. Run tests — failure.ignore ensures allure-results are generated
+      #    even when tests fail, so the report is always available
       - name: Run tests
         run: mvn clean test -Dmaven.test.failure.ignore=true
 
-      # 7. Parse test results — extracts counts for notification messages
+      # 7. Parse test results — extracts counts and skipped/failed test details
       - name: Parse test results
         if: always()
         id: test-results
         run: |
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          echo "commit_msg=$COMMIT_MSG" >> $GITHUB_OUTPUT
+
           if ls target/surefire-reports/TEST-*.xml 1>/dev/null 2>&1; then
             TESTS=$(grep -h 'testsuite' target/surefire-reports/TEST-*.xml | \
               awk -F'"' '{for(i=1;i<=NF;i++){if($(i-1)~/ tests=/){t+=$i}if($(i-1)~/ failures=/){f+=$i}if($(i-1)~/ errors=/){e+=$i}if($(i-1)~/ skipped=/){s+=$i}}}END{print t" "f" "e" "s}')
@@ -77,6 +81,77 @@ jobs:
             else
               echo "status=PASSED" >> $GITHUB_OUTPUT
             fi
+
+            # Extract skipped test names and reasons from surefire XML
+            SKIPPED_DETAILS=""
+            SKIPPED_SLACK=""
+            for xml in target/surefire-reports/TEST-*.xml; do
+              while IFS= read -r line; do
+                if echo "$line" | grep -q 'skipped message='; then
+                  REASON=$(echo "$line" | sed 's/.*message="\([^"]*\)".*/\1/')
+                  TESTNAME=$(echo "$prev_line" | sed 's/.*name="\([^"]*\)".*/\1/')
+                  SKIPPED_DETAILS="${SKIPPED_DETAILS}<li><b>${TESTNAME}</b><br/>Reason: ${REASON}</li>"
+                  SKIPPED_SLACK="${SKIPPED_SLACK}• ${TESTNAME}\n  Reason: ${REASON}\n"
+                fi
+                prev_line="$line"
+              done < "$xml"
+            done
+
+            if [ -z "$SKIPPED_DETAILS" ]; then
+              SKIPPED_DETAILS="<li>No skipped tests</li>"
+              SKIPPED_SLACK="No skipped tests"
+            fi
+
+            # Extract failed test names
+            FAILED_DETAILS=""
+            FAILED_SLACK=""
+            for xml in target/surefire-reports/TEST-*.xml; do
+              while IFS= read -r line; do
+                if echo "$line" | grep -q '<failure'; then
+                  TESTNAME=$(echo "$prev_line" | sed 's/.*name="\([^"]*\)".*/\1/')
+                  FAILMSG=$(echo "$line" | sed 's/.*message="\([^"]*\)".*/\1/' | head -c 100)
+                  FAILED_DETAILS="${FAILED_DETAILS}<li><b>${TESTNAME}</b><br/>${FAILMSG}</li>"
+                  FAILED_SLACK="${FAILED_SLACK}• ${TESTNAME}\n"
+                fi
+                prev_line="$line"
+              done < "$xml"
+            done
+
+            if [ -z "$FAILED_DETAILS" ]; then
+              FAILED_DETAILS="<li>All tests passed!</li>"
+              FAILED_SLACK="All tests passed!"
+            fi
+
+            # Write to files to avoid GITHUB_OUTPUT escaping issues
+            echo "$SKIPPED_DETAILS" > /tmp/skipped_html.txt
+            echo "$FAILED_DETAILS" > /tmp/failed_html.txt
+            echo -e "$SKIPPED_SLACK" > /tmp/skipped_slack.txt
+            echo -e "$FAILED_SLACK" > /tmp/failed_slack.txt
+
+            {
+              echo "skipped_html<<SKEOF"
+              cat /tmp/skipped_html.txt
+              echo "SKEOF"
+            } >> $GITHUB_OUTPUT
+
+            {
+              echo "failed_html<<FHEOF"
+              cat /tmp/failed_html.txt
+              echo "FHEOF"
+            } >> $GITHUB_OUTPUT
+
+            {
+              echo "skipped_slack<<SSEOF"
+              cat /tmp/skipped_slack.txt
+              echo "SSEOF"
+            } >> $GITHUB_OUTPUT
+
+            {
+              echo "failed_slack<<FSEOF"
+              cat /tmp/failed_slack.txt
+              echo "FSEOF"
+            } >> $GITHUB_OUTPUT
+
           else
             echo "total=0" >> $GITHUB_OUTPUT
             echo "passed=0" >> $GITHUB_OUTPUT
@@ -84,10 +159,13 @@ jobs:
             echo "errors=0" >> $GITHUB_OUTPUT
             echo "skipped=0" >> $GITHUB_OUTPUT
             echo "status=NO RESULTS" >> $GITHUB_OUTPUT
+            echo "skipped_html=<li>No test results</li>" >> $GITHUB_OUTPUT
+            echo "failed_html=<li>No test results</li>" >> $GITHUB_OUTPUT
+            echo "skipped_slack=No test results" >> $GITHUB_OUTPUT
+            echo "failed_slack=No test results" >> $GITHUB_OUTPUT
           fi
 
       # 8. Upload Allure results as artifact — preserved for 30 days
-      #    Allows downloading results locally: allure serve allure-results
       - name: Upload Allure results
         if: always()
         uses: actions/upload-artifact@v4
@@ -96,8 +174,7 @@ jobs:
           path: target/allure-results/
           retention-days: 30
 
-      # 9. Upload test screenshots on failure — quick debugging without
-      #    downloading full Allure report
+      # 9. Upload test screenshots on failure
       - name: Upload failure screenshots
         if: failure()
         uses: actions/upload-artifact@v4
@@ -106,7 +183,7 @@ jobs:
           path: screenshots/
           retention-days: 30
 
-      # 10. Generate Allure report using CLI (not Docker-based action)
+      # 10. Generate Allure report using CLI
       - name: Install Allure CLI
         if: always() && github.ref == 'refs/heads/main'
         run: |
@@ -126,7 +203,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: allure-report
 
-      # 12. Slack notification — sends detailed test summary to channel
+      # 12. Slack notification — matches Lab I format with skipped/failed details
       - name: Notify Slack
         if: always()
         uses: slackapi/slack-github-action@v2.0.0
@@ -140,8 +217,17 @@ jobs:
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "${{ steps.test-results.outputs.status == 'PASSED' && '✅' || '❌' }} Selenium II — ${{ steps.test-results.outputs.status }}"
+                    "text": "${{ steps.test-results.outputs.status == 'PASSED' && '✅ All Tests Passed' || '❌ Tests Failed' }}"
                   }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    { "type": "mrkdwn", "text": "*Repository:*\n${{ github.repository }}" },
+                    { "type": "mrkdwn", "text": "*Branch:*\n${{ github.ref_name }}" },
+                    { "type": "mrkdwn", "text": "*Triggered by:*\n${{ github.actor }}" },
+                    { "type": "mrkdwn", "text": "*Commit:*\n${{ steps.test-results.outputs.commit_msg }}" }
+                  ]
                 },
                 {
                   "type": "section",
@@ -154,17 +240,17 @@ jobs:
                 },
                 {
                   "type": "section",
-                  "fields": [
-                    { "type": "mrkdwn", "text": "*Branch:* `${{ github.ref_name }}`" },
-                    { "type": "mrkdwn", "text": "*Commit:* `${{ github.sha }}`" }
-                  ]
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*⏭️ Skipped/Disabled Tests:*\n${{ steps.test-results.outputs.skipped_slack }}"
+                  }
                 },
                 {
                   "type": "actions",
                   "elements": [
                     {
                       "type": "button",
-                      "text": { "type": "plain_text", "text": "View Run" },
+                      "text": { "type": "plain_text", "text": "View Run Details" },
                       "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
                     }
                   ]
@@ -172,7 +258,7 @@ jobs:
               ]
             }
 
-      # 13. Email notification — sends test summary via Gmail SMTP
+      # 13. Email notification — matches Lab I format with test details table
       - name: Notify Email
         if: always()
         uses: dawidd6/action-send-mail@v3
@@ -181,20 +267,54 @@ jobs:
           server_port: 465
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "${{ steps.test-results.outputs.status == 'PASSED' && '✅' || '❌' }} Selenium II CI — ${{ steps.test-results.outputs.status }} (${{ github.ref_name }})"
+          subject: "${{ steps.test-results.outputs.status }} ${{ steps.test-results.outputs.status == 'PASSED' && '✅' || '❌' }} - ${{ github.repository }}"
           to: ${{ secrets.EMAIL_TO }}
-          from: ${{ secrets.EMAIL_USERNAME }}
+          from: CI Test Bot <${{ secrets.EMAIL_USERNAME }}>
           html_body: |
-            <h2>${{ steps.test-results.outputs.status == 'PASSED' && '✅' || '❌' }} Selenium II Test Results</h2>
-            <table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;">
-              <tr><th>Metric</th><th>Count</th></tr>
-              <tr><td>Total</td><td><b>${{ steps.test-results.outputs.total }}</b></td></tr>
-              <tr><td>✅ Passed</td><td>${{ steps.test-results.outputs.passed }}</td></tr>
-              <tr><td>❌ Failed</td><td>${{ steps.test-results.outputs.failed }}</td></tr>
-              <tr><td>⚠️ Skipped</td><td>${{ steps.test-results.outputs.skipped }}</td></tr>
-            </table>
-            <br/>
-            <p><b>Branch:</b> ${{ github.ref_name }}</p>
-            <p><b>Commit:</b> <code>${{ github.sha }}</code></p>
-            <p><b>Triggered by:</b> ${{ github.actor }}</p>
-            <p><a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">View Run</a></p>
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h1 style="color: ${{ steps.test-results.outputs.status == 'PASSED' && '#28a745' || '#dc3545' }}; text-align: center;">
+                ${{ steps.test-results.outputs.status }} ${{ steps.test-results.outputs.status == 'PASSED' && '✅' || '❌' }}
+              </h1>
+
+              <table border="1" cellpadding="10" cellspacing="0" style="border-collapse:collapse; width:100%; margin-bottom:20px;">
+                <tr><td><b>Repository</b></td><td>${{ github.repository }}</td></tr>
+                <tr><td><b>Branch</b></td><td>${{ github.ref_name }}</td></tr>
+                <tr><td><b>Commit</b></td><td>${{ steps.test-results.outputs.commit_msg }}</td></tr>
+                <tr><td><b>Triggered by</b></td><td>${{ github.actor }}</td></tr>
+              </table>
+
+              <h2>Test Results</h2>
+              <table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse; width:100%; text-align:center;">
+                <tr style="background-color:#f0f0f0;">
+                  <th>Total</th>
+                  <th style="color:#28a745;">Passed</th>
+                  <th style="color:#dc3545;">Failed</th>
+                  <th>Errors</th>
+                  <th style="color:#ffc107;">Skipped</th>
+                </tr>
+                <tr>
+                  <td><b>${{ steps.test-results.outputs.total }}</b></td>
+                  <td>${{ steps.test-results.outputs.passed }}</td>
+                  <td>${{ steps.test-results.outputs.failed }}</td>
+                  <td>${{ steps.test-results.outputs.errors }}</td>
+                  <td>${{ steps.test-results.outputs.skipped }}</td>
+                </tr>
+              </table>
+
+              <h3>🐛 Failed Test Details</h3>
+              <ul>${{ steps.test-results.outputs.failed_html }}</ul>
+
+              <h3>⏭️ Skipped/Disabled Tests</h3>
+              <ul>${{ steps.test-results.outputs.skipped_html }}</ul>
+
+              <h3>📸 Screenshots</h3>
+              <p>Screenshots are available in the Allure report artifact.</p>
+
+              <br/>
+              <p style="text-align:center;">
+                <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                   style="background-color:#0366d6; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;">
+                  View Full Report &amp; Download Artifacts
+                </a>
+              </p>
+            </div>
