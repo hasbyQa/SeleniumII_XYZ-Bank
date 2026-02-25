@@ -38,23 +38,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # 4. Install Chrome (stable) — matches DriverFactory's ChromeOptions config
-      - name: Install Chrome
-        uses: browser-actions/setup-chrome@v1
-        with:
-          chrome-version: stable
 
-      # 5. Pre-download aspectjweaver (required by Allure as -javaagent)
+      # 4. Pre-download aspectjweaver (required by Allure as -javaagent)
       - name: Download aspectjweaver
         run: mvn dependency:copy -Dartifact=org.aspectj:aspectjweaver:1.9.22.1 -DoutputDirectory=/tmp -q
 
-      # 6. Run tests — failure.ignore ensures CI gets green checkmark even when
+      # 5. Run tests — failure.ignore ensures CI gets green checkmark even when
       #    tests fail (known bugs M2/M3/M4). Failures visible in Allure report.
       #    -DargLine gives the forked JVM enough memory to avoid OOM crashes.
       - name: Run tests
         run: mvn clean test -Dmaven.test.failure.ignore=true -DargLine="-Xmx512m -XX:+UseG1GC"
 
-      # 7. Parse test results — extracts counts and skipped/failed test details
+      # 6. Parse test results — extracts counts and skipped/failed test details
       - name: Parse test results
         if: always()
         id: test-results
@@ -172,7 +167,7 @@ jobs:
             echo "failed_slack=No test results" >> $GITHUB_OUTPUT
           fi
 
-      # 8. Upload Allure results as artifact — preserved for 30 days
+      # 7. Upload Allure results as artifact — preserved for 30 days
       - name: Upload Allure results
         if: always()
         uses: actions/upload-artifact@v4
@@ -181,7 +176,7 @@ jobs:
           path: target/allure-results/
           retention-days: 30
 
-      # 9. Upload test screenshots on failure
+      # 8. Upload test screenshots on failure
       - name: Upload failure screenshots
         if: failure()
         uses: actions/upload-artifact@v4
@@ -190,7 +185,7 @@ jobs:
           path: screenshots/
           retention-days: 30
 
-      # 10. Generate Allure report using CLI
+      # 9. Generate Allure report using CLI
       - name: Install Allure CLI
         if: always() && github.ref == 'refs/heads/main'
         run: |
@@ -202,7 +197,7 @@ jobs:
         if: always() && github.ref == 'refs/heads/main'
         run: allure generate target/allure-results -o allure-report --clean
 
-      # 11. Deploy Allure report to GitHub Pages
+      # 10. Deploy Allure report to GitHub Pages
       - name: Deploy report to GitHub Pages
         if: always() && github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v4
@@ -210,7 +205,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: allure-report
 
-      # 12. Slack notification — matches Lab I format with skipped/failed details
+      # 11. Slack notification — matches Lab I format with skipped/failed details
       - name: Notify Slack
         if: always()
         uses: slackapi/slack-github-action@v2.0.0
@@ -272,7 +267,7 @@ jobs:
               ]
             }
 
-      # 13. Email notification — matches Lab I format with test details table
+      # 12. Email notification — matches Lab I format with test details table
       - name: Notify Email
         if: always()
         uses: dawidd6/action-send-mail@v3
