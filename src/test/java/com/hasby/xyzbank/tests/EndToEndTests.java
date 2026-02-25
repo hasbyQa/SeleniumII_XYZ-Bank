@@ -1,7 +1,6 @@
 package com.hasby.xyzbank.tests;
 
 import com.hasby.xyzbank.base.BaseTest;
-import com.hasby.xyzbank.pages.*;
 import com.hasby.xyzbank.utils.AlertHelper;
 import io.qameta.allure.*;
 import org.junit.jupiter.api.*;
@@ -16,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class EndToEndTests extends BaseTest {
 
-    // E2E uses its own constants — isolated from unit test data
     private static final String FIRST_NAME = "E2EJohn";
     private static final String LAST_NAME = "Doe";
     private static final String FULL_NAME = FIRST_NAME + " " + LAST_NAME;
@@ -31,19 +29,13 @@ public class EndToEndTests extends BaseTest {
     @Severity(SeverityLevel.BLOCKER)
     @Description("Complete lifecycle: Manager creates customer and account → " +
             "Customer logs in, deposits, withdraws, verifies transactions → " +
-            "Customer logs out → Manager confirms customer still exists. " +
-            "Single browser session, no shortcuts.")
+            "Customer logs out → Manager confirms customer still exists.")
     @DisplayName("E2E - Full banking lifecycle")
     void testFullBankingLifecycle() {
 
         // ============ PHASE 1: Manager creates customer ============
-        HomePage homePage = new HomePage(driver);
         homePage.clickManagerLogin();
-
-        ManagerDashboardPage managerDashboard = new ManagerDashboardPage(driver);
         managerDashboard.clickAddCustomer();
-
-        AddCustomerPage addCustomerPage = new AddCustomerPage(driver);
         addCustomerPage.addCustomer(FIRST_NAME, LAST_NAME, POST_CODE);
 
         String addAlert = AlertHelper.acceptAndGetText(driver);
@@ -53,7 +45,6 @@ public class EndToEndTests extends BaseTest {
 
         // ============ PHASE 2: Manager opens account ============
         managerDashboard.clickOpenAccount();
-        OpenAccountPage openAccountPage = new OpenAccountPage(driver);
         openAccountPage.openAccount(FULL_NAME, CURRENCY);
 
         String accountAlert = AlertHelper.acceptAndGetText(driver);
@@ -63,24 +54,18 @@ public class EndToEndTests extends BaseTest {
 
         // ============ PHASE 3: Manager verifies customer in list ============
         managerDashboard.clickCustomers();
-        CustomersPage customersPage = new CustomersPage(driver);
         assertTrue(customersPage.isCustomerPresent(FIRST_NAME),
                 "Step 3: Customer should appear in manager's customer list");
         logger.info("=== PHASE 3 COMPLETE: Customer verified in list ===");
 
         // ============ PHASE 4: Customer logs in ============
         driver.get(BASE_URL);
-        homePage = new HomePage(driver);
+        initPages();
         homePage.clickCustomerLogin();
+        customerLoginPage.loginAs(FULL_NAME);
 
-        CustomerLoginPage loginPage = new CustomerLoginPage(driver);
-        loginPage.loginAs(FULL_NAME);
-
-        AccountPage accountPage = new AccountPage(driver);
         accountPage.waitForPageLoad();
-
-        String welcome = accountPage.getWelcomeMessage();
-        assertTrue(welcome.contains(FIRST_NAME),
+        assertTrue(accountPage.getWelcomeMessage().contains(FIRST_NAME),
                 "Step 4: Welcome message should contain customer name");
 
         int initialBalance = accountPage.getBalanceAsInt();
@@ -90,7 +75,6 @@ public class EndToEndTests extends BaseTest {
 
         // ============ PHASE 5: Customer deposits ============
         accountPage.clickDeposit();
-        DepositPage depositPage = new DepositPage(driver);
         depositPage.deposit(DEPOSIT_AMOUNT);
 
         assertEquals("Deposit Successful", depositPage.getMessage(),
@@ -104,7 +88,6 @@ public class EndToEndTests extends BaseTest {
 
         // ============ PHASE 6: Customer withdraws ============
         accountPage.clickWithdraw();
-        WithdrawPage withdrawPage = new WithdrawPage(driver);
         withdrawPage.withdraw(WITHDRAW_AMOUNT);
 
         assertEquals("Transaction successful", withdrawPage.getMessage(),
@@ -119,12 +102,9 @@ public class EndToEndTests extends BaseTest {
 
         // ============ PHASE 7: Customer verifies transactions ============
         accountPage.clickTransactions();
-        TransactionsPage transactionsPage = new TransactionsPage(driver);
-
-        // Wait for transactions to populate — app registers them asynchronously
         int txCount = transactionsPage.waitForAtLeastTransactions(2);
         assertTrue(txCount >= 2,
-                "Step 7: Should have at least 1 transaction");
+                "Step 7: Should have at least 2 transactions");
 
         assertTrue(transactionsPage.hasTransactionOfType("Credit"),
                 "Step 7: Deposit should appear as Credit");
@@ -135,30 +115,26 @@ public class EndToEndTests extends BaseTest {
                 "Step 7: Withdrawal should appear as Debit");
         assertTrue(transactionsPage.hasTransactionWithAmount(WITHDRAW_AMOUNT),
                 "Step 7: Should show withdrawal amount");
-        logger.info("=== PHASE 7 COMPLETE: {} transactions verified (Credit + Debit) ===", txCount);
+        logger.info("=== PHASE 7 COMPLETE: {} transactions verified ===", txCount);
 
         // ============ PHASE 8: Customer logs out ============
         transactionsPage.clickBack();
-        accountPage = new AccountPage(driver);
 
-        // Verify balance is still correct before logout
         assertEquals(expectedBalance, accountPage.getBalanceAsInt(),
                 "Step 8: Balance should persist before logout");
 
         driver.get(BASE_URL);
-        homePage = new HomePage(driver);
+        initPages();
         logger.info("=== PHASE 8 COMPLETE: Customer logged out ===");
 
         // ============ PHASE 9: Manager confirms customer still exists ============
         homePage.clickManagerLogin();
-        managerDashboard = new ManagerDashboardPage(driver);
         managerDashboard.clickCustomers();
-        customersPage = new CustomersPage(driver);
 
         assertTrue(customersPage.isCustomerPresent(FIRST_NAME),
                 "Step 9: Customer should still exist after banking operations");
-        logger.info("=== PHASE 9 COMPLETE: Customer still exists in manager view ===");
+        logger.info("=== PHASE 9 COMPLETE: Customer still exists ===");
 
-        logger.info("========== E2E TEST PASSED: Full lifecycle verified ==========");
+        logger.info("========== E2E TEST PASSED ==========");
     }
 }

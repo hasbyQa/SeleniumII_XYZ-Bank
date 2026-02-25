@@ -1,7 +1,6 @@
 package com.hasby.xyzbank.tests;
 
 import com.hasby.xyzbank.base.BaseTest;
-import com.hasby.xyzbank.pages.*;
 import com.hasby.xyzbank.utils.AlertHelper;
 import com.hasby.xyzbank.utils.TestConstants;
 import io.qameta.allure.*;
@@ -17,18 +16,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class CustomerTests extends BaseTest {
 
-    private HomePage homePage;
-    private AccountPage accountPage;
-    private DepositPage depositPage;
-    private WithdrawPage withdrawPage;
-    private TransactionsPage transactionsPage;
+    // No page field declarations — inherited from BaseTest
 
     private void setupCustomerWithAccountAndLogin() {
-        homePage = new HomePage(driver);
         homePage.clickManagerLogin();
-        ManagerDashboardPage managerDashboard = new ManagerDashboardPage(driver);
         managerDashboard.clickAddCustomer();
-        AddCustomerPage addCustomerPage = new AddCustomerPage(driver);
         addCustomerPage.addCustomer(
                 TestConstants.CUST_FIRST_NAME,
                 TestConstants.CUST_LAST_NAME,
@@ -36,24 +28,20 @@ public class CustomerTests extends BaseTest {
         AlertHelper.acceptAndGetText(driver);
 
         managerDashboard.clickOpenAccount();
-        OpenAccountPage openAccountPage = new OpenAccountPage(driver);
         openAccountPage.openAccount(TestConstants.CUST_FULL_NAME, TestConstants.CURRENCY);
         AlertHelper.acceptAndGetText(driver);
 
         driver.get(BASE_URL);
-        homePage = new HomePage(driver);
+        initPages();
         homePage.clickCustomerLogin();
-        CustomerLoginPage loginPage = new CustomerLoginPage(driver);
-        loginPage.loginAs(TestConstants.CUST_FULL_NAME);
+        customerLoginPage.loginAs(TestConstants.CUST_FULL_NAME);
 
-        accountPage = new AccountPage(driver);
         accountPage.waitForPageLoad();
         logger.info("Customer {} ready", TestConstants.CUST_FULL_NAME);
     }
 
     private void depositAmount(String amount) {
         accountPage.clickDeposit();
-        depositPage = new DepositPage(driver);
         depositPage.deposit(amount);
     }
 
@@ -67,7 +55,6 @@ public class CustomerTests extends BaseTest {
     @DisplayName("C1 - Customer login")
     void testCustomerLogin() {
         setupCustomerWithAccountAndLogin();
-
         String welcome = accountPage.getWelcomeMessage();
         assertTrue(welcome.contains(TestConstants.CUST_FIRST_NAME),
                 "Welcome message should contain customer name");
@@ -81,10 +68,7 @@ public class CustomerTests extends BaseTest {
     @DisplayName("C2 - View transactions (empty)")
     void testViewTransactionsEmpty() {
         setupCustomerWithAccountAndLogin();
-
         accountPage.clickTransactions();
-        transactionsPage = new TransactionsPage(driver);
-
         assertEquals(0, transactionsPage.getTransactionCount(),
                 "New account should have zero transactions");
     }
@@ -97,16 +81,12 @@ public class CustomerTests extends BaseTest {
     @DisplayName("C3 - Deposit valid amount")
     void testDepositValidAmount() {
         setupCustomerWithAccountAndLogin();
-
         int balanceBefore = accountPage.getBalanceAsInt();
 
-        accountPage.clickDeposit();
-        depositPage = new DepositPage(driver);
-        depositPage.deposit("500");
+        depositAmount("500");
 
         assertEquals("Deposit Successful", depositPage.getMessage(),
                 "Should show deposit success message");
-
         assertEquals(balanceBefore + 500, accountPage.getBalanceAsInt(),
                 "Balance should increase by deposit amount");
     }
@@ -120,16 +100,13 @@ public class CustomerTests extends BaseTest {
     void testWithdrawValidAmount() {
         setupCustomerWithAccountAndLogin();
         depositAmount("1000");
-
         int balanceBefore = accountPage.getBalanceAsInt();
 
         accountPage.clickWithdraw();
-        withdrawPage = new WithdrawPage(driver);
         withdrawPage.withdraw("300");
 
         assertEquals("Transaction successful", withdrawPage.getMessage(),
                 "Should show withdraw success message");
-
         assertEquals(balanceBefore - 300, accountPage.getBalanceAsInt(),
                 "Balance should decrease by withdrawal amount");
     }
@@ -145,9 +122,6 @@ public class CustomerTests extends BaseTest {
         depositAmount("750");
 
         accountPage.clickTransactions();
-        transactionsPage = new TransactionsPage(driver);
-
-        // Wait for Angular to populate the table — transactions register asynchronously
         transactionsPage.waitForAtLeastTransactions(1);
 
         assertTrue(transactionsPage.getTransactionCount() > 0,
@@ -169,16 +143,12 @@ public class CustomerTests extends BaseTest {
         depositAmount("1000");
 
         accountPage.clickWithdraw();
-        withdrawPage = new WithdrawPage(driver);
         withdrawPage.withdraw("400");
 
-        // Ensure withdrawal is processed before navigating to transactions
         assertEquals("Transaction successful", withdrawPage.getMessage(),
                 "Withdrawal should succeed");
 
         accountPage.clickTransactions();
-        transactionsPage = new TransactionsPage(driver);
-
         transactionsPage.waitForAtLeastTransactions(2);
 
         assertTrue(transactionsPage.hasTransactionOfType("Debit"),
@@ -197,12 +167,9 @@ public class CustomerTests extends BaseTest {
     @DisplayName("C4 - Deposit zero rejected")
     void testDepositZeroOrNegative() {
         setupCustomerWithAccountAndLogin();
-
         int balanceBefore = accountPage.getBalanceAsInt();
 
-        accountPage.clickDeposit();
-        depositPage = new DepositPage(driver);
-        depositPage.deposit("0");
+        depositAmount("0");
 
         assertEquals(balanceBefore, accountPage.getBalanceAsInt(),
                 "Balance should not change after depositing zero");
@@ -219,7 +186,6 @@ public class CustomerTests extends BaseTest {
         depositAmount("100");
 
         accountPage.clickWithdraw();
-        withdrawPage = new WithdrawPage(driver);
         withdrawPage.withdraw("99999");
 
         assertNotEquals("Transaction successful", withdrawPage.getMessage(),
@@ -235,11 +201,9 @@ public class CustomerTests extends BaseTest {
     void testWithdrawZeroOrNegative() {
         setupCustomerWithAccountAndLogin();
         depositAmount("500");
-
         int balanceBefore = accountPage.getBalanceAsInt();
 
         accountPage.clickWithdraw();
-        withdrawPage = new WithdrawPage(driver);
         withdrawPage.withdraw("0");
 
         assertEquals(balanceBefore, accountPage.getBalanceAsInt(),
@@ -257,14 +221,11 @@ public class CustomerTests extends BaseTest {
         depositAmount("250");
 
         accountPage.clickTransactions();
-        transactionsPage = new TransactionsPage(driver);
         int countBefore = transactionsPage.waitForAtLeastTransactions(1);
         assertTrue(countBefore > 0, "Should have at least one transaction");
 
         transactionsPage.clickBack();
-        accountPage = new AccountPage(driver);
         accountPage.clickTransactions();
-        transactionsPage = new TransactionsPage(driver);
 
         assertEquals(countBefore, transactionsPage.waitForAtLeastTransactions(1),
                 "Transactions should persist after navigating away and back");

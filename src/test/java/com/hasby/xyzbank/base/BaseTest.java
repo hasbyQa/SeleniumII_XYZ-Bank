@@ -50,7 +50,7 @@ public abstract class BaseTest {
     }
 
     // Initializes all page objects — PageFactory proxies resolve lazily
-    private void initPages() {
+    protected void initPages() {
         homePage = new HomePage(driver);
         managerDashboard = new ManagerDashboardPage(driver);
         addCustomerPage = new AddCustomerPage(driver);

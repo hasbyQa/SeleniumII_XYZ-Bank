@@ -1,7 +1,6 @@
 package com.hasby.xyzbank.tests;
 
 import com.hasby.xyzbank.base.BaseTest;
-import com.hasby.xyzbank.pages.*;
 import com.hasby.xyzbank.utils.AlertHelper;
 import com.hasby.xyzbank.utils.TestConstants;
 import io.qameta.allure.*;
@@ -19,17 +18,10 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ManagerTests extends BaseTest {
 
-    private HomePage homePage;
-    private ManagerDashboardPage managerDashboard;
-    private AddCustomerPage addCustomerPage;
-    private OpenAccountPage openAccountPage;
-    private CustomersPage customersPage;
+    // No page field declarations — inherited from BaseTest
 
-    // Navigates to manager dashboard — reused by every test
     private void goToManagerDashboard() {
-        homePage = new HomePage(driver);
         homePage.clickManagerLogin();
-        managerDashboard = new ManagerDashboardPage(driver);
         logger.info("Navigated to Manager Dashboard");
     }
 
@@ -44,8 +36,6 @@ public class ManagerTests extends BaseTest {
     void testAddCustomerWithValidData() {
         goToManagerDashboard();
         managerDashboard.clickAddCustomer();
-
-        addCustomerPage = new AddCustomerPage(driver);
         addCustomerPage.addCustomer(
                 TestConstants.MGR_FIRST_NAME,
                 TestConstants.MGR_LAST_NAME,
@@ -65,8 +55,6 @@ public class ManagerTests extends BaseTest {
     void testAddMultipleCustomers(String firstName, String lastName, String postCode) {
         goToManagerDashboard();
         managerDashboard.clickAddCustomer();
-
-        addCustomerPage = new AddCustomerPage(driver);
         addCustomerPage.addCustomer(firstName, lastName, postCode);
 
         String alertText = AlertHelper.acceptAndGetText(driver);
@@ -83,7 +71,6 @@ public class ManagerTests extends BaseTest {
     void testOpenAccountForCustomer() {
         goToManagerDashboard();
         managerDashboard.clickAddCustomer();
-        addCustomerPage = new AddCustomerPage(driver);
         addCustomerPage.addCustomer(
                 TestConstants.MGR_FIRST_NAME,
                 TestConstants.MGR_LAST_NAME,
@@ -91,7 +78,6 @@ public class ManagerTests extends BaseTest {
         AlertHelper.acceptAndGetText(driver);
 
         managerDashboard.clickOpenAccount();
-        openAccountPage = new OpenAccountPage(driver);
         openAccountPage.openAccount(
                 TestConstants.MGR_FIRST_NAME + " " + TestConstants.MGR_LAST_NAME,
                 TestConstants.CURRENCY);
@@ -110,7 +96,6 @@ public class ManagerTests extends BaseTest {
     void testCustomerAppearsInList() {
         goToManagerDashboard();
         managerDashboard.clickAddCustomer();
-        addCustomerPage = new AddCustomerPage(driver);
         addCustomerPage.addCustomer(
                 TestConstants.MGR_FIRST_NAME,
                 TestConstants.MGR_LAST_NAME,
@@ -118,8 +103,6 @@ public class ManagerTests extends BaseTest {
         AlertHelper.acceptAndGetText(driver);
 
         managerDashboard.clickCustomers();
-        customersPage = new CustomersPage(driver);
-
         assertTrue(customersPage.isCustomerPresent(TestConstants.MGR_FIRST_NAME),
                 "Customer should be in the list");
     }
@@ -133,7 +116,6 @@ public class ManagerTests extends BaseTest {
     void testDeleteCustomer() {
         goToManagerDashboard();
         managerDashboard.clickAddCustomer();
-        addCustomerPage = new AddCustomerPage(driver);
         addCustomerPage.addCustomer(
                 TestConstants.MGR_FIRST_NAME,
                 TestConstants.MGR_LAST_NAME,
@@ -141,7 +123,6 @@ public class ManagerTests extends BaseTest {
         AlertHelper.acceptAndGetText(driver);
 
         managerDashboard.clickCustomers();
-        customersPage = new CustomersPage(driver);
         customersPage.deleteCustomer(TestConstants.MGR_FIRST_NAME);
 
         assertFalse(customersPage.isCustomerPresent(TestConstants.MGR_FIRST_NAME),
@@ -157,7 +138,6 @@ public class ManagerTests extends BaseTest {
     void testDeletedCustomerNotInLoginDropdown() {
         goToManagerDashboard();
         managerDashboard.clickAddCustomer();
-        addCustomerPage = new AddCustomerPage(driver);
         addCustomerPage.addCustomer(
                 TestConstants.MGR_FIRST_NAME,
                 TestConstants.MGR_LAST_NAME,
@@ -165,21 +145,18 @@ public class ManagerTests extends BaseTest {
         AlertHelper.acceptAndGetText(driver);
 
         managerDashboard.clickCustomers();
-        customersPage = new CustomersPage(driver);
         customersPage.deleteCustomer(TestConstants.MGR_FIRST_NAME);
 
-        // Switch to customer login view
         driver.get(BASE_URL);
-        homePage = new HomePage(driver);
+        initPages();
         homePage.clickCustomerLogin();
 
-        CustomerLoginPage loginPage = new CustomerLoginPage(driver);
-        assertFalse(loginPage.isCustomerInDropdown(
+        assertFalse(customerLoginPage.isCustomerInDropdown(
                         TestConstants.MGR_FIRST_NAME + " " + TestConstants.MGR_LAST_NAME),
                 "Deleted customer should not appear in login dropdown");
     }
 
-    // ==================== NEGATIVE / BUG TESTS ====================
+    // ==================== NEGATIVE / BUG TESTS (run and FAIL to prove bugs) ====================
 
     @Test
     @Order(7)
@@ -187,16 +164,11 @@ public class ManagerTests extends BaseTest {
     @Severity(SeverityLevel.NORMAL)
     @Description("BUG-001 | Customer name field accepts numbers. " +
             "Expected: Only alphabetic characters allowed. " +
-            "Actual: 'John123' is accepted without validation error. " +
-            "Steps: Manager → Add Customer → enter 'John123' as first name → submit. " +
-            "Severity: Normal | Priority: Medium | Fix: Add regex validation for alphabetic-only names")
+            "Actual: 'John123' is accepted without validation error.")
     @DisplayName("M2 - Name should reject numbers")
-    @Disabled("Known bug — app accepts numbers in name field without validation")
     void testNameRejectsNumbers() {
         goToManagerDashboard();
         managerDashboard.clickAddCustomer();
-
-        addCustomerPage = new AddCustomerPage(driver);
         addCustomerPage.addCustomer("John123", TestConstants.MGR_LAST_NAME, TestConstants.MGR_POST_CODE);
 
         String alertText = AlertHelper.acceptAndGetText(driver);
@@ -209,17 +181,12 @@ public class ManagerTests extends BaseTest {
     @Story("Input Validation")
     @Severity(SeverityLevel.NORMAL)
     @Description("BUG-002 | Customer name field accepts special characters. " +
-            "Expected: Only alphabetic characters allowed per acceptance criteria. " +
-            "Actual: 'John@#$' is accepted without validation error. " +
-            "Steps: Manager → Add Customer → enter 'John@#$' as first name → submit. " +
-            "Severity: Normal | Priority: Medium | Fix: Add regex validation ^[a-zA-Z]+$")
+            "Expected: Only alphabetic characters allowed. " +
+            "Actual: 'John@#$' is accepted without validation error.")
     @DisplayName("M3 - Name should reject special characters")
-    @Disabled("Known bug — app accepts special characters in name field")
     void testNameRejectsSpecialChars() {
         goToManagerDashboard();
         managerDashboard.clickAddCustomer();
-
-        addCustomerPage = new AddCustomerPage(driver);
         addCustomerPage.addCustomer("John@#$", TestConstants.MGR_LAST_NAME, TestConstants.MGR_POST_CODE);
 
         String alertText = AlertHelper.acceptAndGetText(driver);
@@ -232,17 +199,12 @@ public class ManagerTests extends BaseTest {
     @Story("Input Validation")
     @Severity(SeverityLevel.NORMAL)
     @Description("BUG-003 | Postal code field accepts non-numeric input. " +
-            "Expected: Only numeric characters allowed per acceptance criteria. " +
-            "Actual: 'ABCDEF' is accepted without validation error. " +
-            "Steps: Manager → Add Customer → enter valid names → enter 'ABCDEF' as post code → submit. " +
-            "Severity: Normal | Priority: Medium | Fix: Add numeric-only validation for postal code")
+            "Expected: Only numeric characters allowed. " +
+            "Actual: 'ABCDEF' is accepted without validation error.")
     @DisplayName("M4 - Postal code should reject non-numeric")
-    @Disabled("Known bug — app accepts non-numeric postal codes")
     void testPostalCodeRejectsNonNumeric() {
         goToManagerDashboard();
         managerDashboard.clickAddCustomer();
-
-        addCustomerPage = new AddCustomerPage(driver);
         addCustomerPage.addCustomer(TestConstants.MGR_FIRST_NAME, TestConstants.MGR_LAST_NAME, "ABCDEF");
 
         String alertText = AlertHelper.acceptAndGetText(driver);

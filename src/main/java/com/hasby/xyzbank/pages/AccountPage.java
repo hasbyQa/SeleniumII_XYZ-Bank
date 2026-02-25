@@ -1,6 +1,7 @@
 package com.hasby.xyzbank.pages;
 
 import io.qameta.allure.Step;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
@@ -12,13 +13,16 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 
-// Account overview — shows balance, account number, and navigation buttons
 public class AccountPage {
 
     private static final Logger logger = LoggerFactory.getLogger(AccountPage.class);
     private final WebDriverWait wait;
 
-//    // XPath required — these <strong> tags have no unique attributes, only position
+    // XPath locator for the account info container — used by waitForAccountInfo()
+    private static final By ACCOUNT_INFO_DIV =
+            By.xpath("//div[@ng-hide='noAccount']");
+
+    // XPath required — these <strong> tags have no unique attributes, only position
     @FindBy(xpath = "//div[@ng-hide='noAccount']//strong[1]")
     private WebElement accountNumber;
 
@@ -28,19 +32,15 @@ public class AccountPage {
     @FindBy(xpath = "//div[@ng-hide='noAccount']//strong[3]")
     private WebElement currency;
 
-    //Naviates to history
     @FindBy(css = "[ng-click='transactions()']")
     private WebElement transactionsBtn;
 
-    //shows deposit form
     @FindBy(css = "[ng-click='deposit()']")
     private WebElement depositBtn;
 
-    // App misspells "withdrawal" as "withdrawl"(app withdraw form)
     @FindBy(css = "[ng-click='withdrawl()']")
     private WebElement withdrawBtn;
 
-    // Welcome message — only reliable element to confirm page loaded
     @FindBy(css = ".fontBig.ng-binding")
     private WebElement welcomeMessage;
 
@@ -50,7 +50,12 @@ public class AccountPage {
         logger.info("AccountPage initialized");
     }
 
-    // Call after login — ensures Angular has rendered the account view
+    // Two-layer wait: container div first, THEN individual element
+    // Ensures Angular has rendered the account info section before accessing <strong> tags
+    private void waitForAccountInfo() {
+        wait.until(ExpectedConditions.visibilityOfElementLocated(ACCOUNT_INFO_DIV));
+    }
+
     @Step("Wait for account page to load")
     public void waitForPageLoad() {
         wait.until(ExpectedConditions.visibilityOf(welcomeMessage));
@@ -62,9 +67,25 @@ public class AccountPage {
         return welcomeMessage.getText();
     }
 
+    @Step("Get account number")
+    public String getAccountNumber() {
+        waitForAccountInfo();
+        wait.until(ExpectedConditions.visibilityOf(accountNumber));
+        return accountNumber.getText();
+    }
+
+    @Step("Get balance")
     public int getBalanceAsInt() {
+        waitForAccountInfo();
         wait.until(ExpectedConditions.visibilityOf(balance));
         return Integer.parseInt(balance.getText());
+    }
+
+    @Step("Get currency")
+    public String getCurrency() {
+        waitForAccountInfo();
+        wait.until(ExpectedConditions.visibilityOf(currency));
+        return currency.getText();
     }
 
     @Step("Click Transactions")
