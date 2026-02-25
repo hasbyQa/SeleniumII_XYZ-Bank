@@ -253,7 +253,6 @@ jobs:
                     "text": "*⏭️ Skipped/Disabled Tests:*\n${{ steps.test-results.outputs.skipped_slack }}"
                   }
                 },
-                },
                 {
                   "type": "actions",
                   "elements": [
