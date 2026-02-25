@@ -1,5 +1,6 @@
 package com.hasby.xyzbank.base;
 
+import com.hasby.xyzbank.pages.*;
 import com.hasby.xyzbank.utils.ScreenshotExtension;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.junit.jupiter.api.AfterEach;
@@ -19,7 +20,18 @@ public abstract class BaseTest {
     protected static final String BASE_URL =
             "https://www.way2automation.com/angularjs-protractor/banking/#/login";
 
-    // Driver creation — configured for both local and CI/Docker environments
+    // Page objects — initialized once in setUp(), inherited by all tests (DRY)
+    protected HomePage homePage;
+    protected ManagerDashboardPage managerDashboard;
+    protected AddCustomerPage addCustomerPage;
+    protected OpenAccountPage openAccountPage;
+    protected CustomersPage customersPage;
+    protected CustomerLoginPage customerLoginPage;
+    protected AccountPage accountPage;
+    protected DepositPage depositPage;
+    protected WithdrawPage withdrawPage;
+    protected TransactionsPage transactionsPage;
+
     private static WebDriver createDriver() {
         WebDriverManager.chromedriver().setup();
 
@@ -37,12 +49,28 @@ public abstract class BaseTest {
         return driver;
     }
 
+    // Initializes all page objects — PageFactory proxies resolve lazily
+    private void initPages() {
+        homePage = new HomePage(driver);
+        managerDashboard = new ManagerDashboardPage(driver);
+        addCustomerPage = new AddCustomerPage(driver);
+        openAccountPage = new OpenAccountPage(driver);
+        customersPage = new CustomersPage(driver);
+        customerLoginPage = new CustomerLoginPage(driver);
+        accountPage = new AccountPage(driver);
+        depositPage = new DepositPage(driver);
+        withdrawPage = new WithdrawPage(driver);
+        transactionsPage = new TransactionsPage(driver);
+    }
+
     @BeforeEach
     void setUp() {
         logger.info("*************** TEST SETUP STARTED ***************");
         driver = createDriver();
         driver.get(BASE_URL);
         logger.info("Navigated to: {}", BASE_URL);
+        initPages();
+        logger.info("All page objects initialized");
         logger.info("*************** TEST SETUP COMPLETED ***************");
     }
 
