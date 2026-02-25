@@ -126,8 +126,6 @@ jobs:
             # Write to files to avoid GITHUB_OUTPUT escaping issues
             echo "$SKIPPED_DETAILS" > /tmp/skipped_html.txt
             echo "$FAILED_DETAILS" > /tmp/failed_html.txt
-            echo -e "$SKIPPED_SLACK" > /tmp/skipped_slack.txt
-            echo -e "$FAILED_SLACK" > /tmp/failed_slack.txt
 
             {
               echo "skipped_html<<SKEOF"
@@ -141,17 +139,8 @@ jobs:
               echo "FHEOF"
             } >> $GITHUB_OUTPUT
 
-            {
-              echo "skipped_slack<<SSEOF"
-              cat /tmp/skipped_slack.txt
-              echo "SSEOF"
-            } >> $GITHUB_OUTPUT
-
-            {
-              echo "failed_slack<<FSEOF"
-              cat /tmp/failed_slack.txt
-              echo "FSEOF"
-            } >> $GITHUB_OUTPUT
+            echo "skipped_slack=${SKIPPED_SLACK}" >> $GITHUB_OUTPUT
+            echo "failed_slack=${FAILED_SLACK}" >> $GITHUB_OUTPUT
 
           else
             echo "total=0" >> $GITHUB_OUTPUT
