@@ -122,8 +122,8 @@ public class EndToEndTests extends BaseTest {
         TransactionsPage transactionsPage = new TransactionsPage(driver);
 
         // Wait for transactions to populate — app registers them asynchronously
-        int txCount = transactionsPage.waitForAtLeastTransactions(1);
-        assertTrue(txCount >= 1,
+        int txCount = transactionsPage.waitForAtLeastTransactions(2);
+        assertTrue(txCount >= 2,
                 "Step 7: Should have at least 1 transaction");
 
         assertTrue(transactionsPage.hasTransactionOfType("Credit"),

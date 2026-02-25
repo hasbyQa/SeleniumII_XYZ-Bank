@@ -21,6 +21,7 @@ public class CustomersPage {
     private final WebDriver driver;
     private final WebDriverWait wait;
 
+    //customer search filter
     @FindBy(css = "[ng-model='searchCustomer']")
     private WebElement searchInput;
 

@@ -18,7 +18,7 @@ public class AccountPage {
     private static final Logger logger = LoggerFactory.getLogger(AccountPage.class);
     private final WebDriverWait wait;
 
-    // XPath required — these <strong> tags have no unique attributes, only position
+//    // XPath required — these <strong> tags have no unique attributes, only position
     @FindBy(xpath = "//div[@ng-hide='noAccount']//strong[1]")
     private WebElement accountNumber;
 
@@ -28,13 +28,15 @@ public class AccountPage {
     @FindBy(xpath = "//div[@ng-hide='noAccount']//strong[3]")
     private WebElement currency;
 
+    //Naviates to history
     @FindBy(css = "[ng-click='transactions()']")
     private WebElement transactionsBtn;
 
+    //shows deposit form
     @FindBy(css = "[ng-click='deposit()']")
     private WebElement depositBtn;
 
-    // App misspells "withdrawal" as "withdrawl"
+    // App misspells "withdrawal" as "withdrawl"(app withdraw form)
     @FindBy(css = "[ng-click='withdrawl()']")
     private WebElement withdrawBtn;
 

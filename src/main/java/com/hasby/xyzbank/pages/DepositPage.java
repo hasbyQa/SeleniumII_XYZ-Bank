@@ -23,6 +23,7 @@ public class DepositPage {
     // Targets only the form's submit button — not nav buttons outside <form>
     private static final By FORM_SUBMIT = By.cssSelector("form button[type='submit']");
 
+    //deposit amount
     @FindBy(css = "[ng-model='amount']")
     private WebElement amountInput;
 

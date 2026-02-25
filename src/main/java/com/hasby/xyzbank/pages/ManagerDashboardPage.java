@@ -19,12 +19,16 @@ public class ManagerDashboardPage {
     private final WebDriverWait wait;
 
     // ng-click locators — describe what each button does
+
+    //shows add customer form
     @FindBy(css = "[ng-click='addCust()']")
     private WebElement addCustomerBtn;
 
+    //shows open account form
     @FindBy(css = "[ng-click='openAccount()']")
     private WebElement openAccountBtn;
 
+    //shows customer list
     @FindBy(css = "[ng-click='showCust()']")
     private WebElement customersBtn;
 

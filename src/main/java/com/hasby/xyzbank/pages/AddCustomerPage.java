@@ -18,7 +18,7 @@ public class AddCustomerPage {
     private static final Logger logger = LoggerFactory.getLogger(AddCustomerPage.class);
     private final WebDriverWait wait;
 
-    // ng-model locators — Angular data binding attributes
+    // ng-model locators — shows what data it binds to
     @FindBy(css = "[ng-model='fName']")
     private WebElement firstNameInput;
 

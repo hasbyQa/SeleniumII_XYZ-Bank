@@ -18,9 +18,11 @@ public class HomePage {
     private static final Logger logger = LoggerFactory.getLogger(HomePage.class);
     private final WebDriverWait wait;
 
+    //Routes to customer login
     @FindBy(css = "[ng-click='customer()']")
     private WebElement customerLoginBtn;
 
+    //Routes to manager dashboard
     @FindBy(css = "[ng-click='manager()']")
     private WebElement managerLoginBtn;
 
