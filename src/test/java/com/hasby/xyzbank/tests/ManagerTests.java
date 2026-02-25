@@ -163,8 +163,16 @@ public class ManagerTests extends BaseTest {
     @Story("Input Validation")
     @Severity(SeverityLevel.NORMAL)
     @Description("BUG-001 | Customer name field accepts numbers. " +
+            "Severity: Medium | Priority: Medium | Status: Open. " +
             "Expected: Only alphabetic characters allowed. " +
-            "Actual: 'John123' is accepted without validation error.")
+            "Actual: 'John123' is accepted without validation error. " +
+            "Steps: 1) Open browser → navigate to XYZ Bank login page. " +
+            "2) Click 'Bank Manager Login'. " +
+            "3) Click 'Add Customer' tab. " +
+            "4) Enter 'John123' in First Name field. " +
+            "5) Enter valid Last Name and Post Code. " +
+            "6) Click 'Add Customer' button. " +
+            "7) Observe: alert says 'Customer added successfully' — name with numbers was accepted.")
     @DisplayName("M2 - Name should reject numbers")
     void testNameRejectsNumbers() {
         goToManagerDashboard();
@@ -181,8 +189,16 @@ public class ManagerTests extends BaseTest {
     @Story("Input Validation")
     @Severity(SeverityLevel.NORMAL)
     @Description("BUG-002 | Customer name field accepts special characters. " +
+            "Severity: Medium | Priority: Medium | Status: Open. " +
             "Expected: Only alphabetic characters allowed. " +
-            "Actual: 'John@#$' is accepted without validation error.")
+            "Actual: 'John@#$' is accepted without validation error. " +
+            "Steps: 1) Open browser → navigate to XYZ Bank login page. " +
+            "2) Click 'Bank Manager Login'. " +
+            "3) Click 'Add Customer' tab. " +
+            "4) Enter 'John@#$' in First Name field. " +
+            "5) Enter valid Last Name and Post Code. " +
+            "6) Click 'Add Customer' button. " +
+            "7) Observe: alert says 'Customer added successfully' — special characters were accepted.")
     @DisplayName("M3 - Name should reject special characters")
     void testNameRejectsSpecialChars() {
         goToManagerDashboard();
@@ -199,8 +215,16 @@ public class ManagerTests extends BaseTest {
     @Story("Input Validation")
     @Severity(SeverityLevel.NORMAL)
     @Description("BUG-003 | Postal code field accepts non-numeric input. " +
+            "Severity: Low | Priority: Low | Status: Open. " +
             "Expected: Only numeric characters allowed. " +
-            "Actual: 'ABCDEF' is accepted without validation error.")
+            "Actual: 'ABCDEF' is accepted without validation error. " +
+            "Steps: 1) Open browser → navigate to XYZ Bank login page. " +
+            "2) Click 'Bank Manager Login'. " +
+            "3) Click 'Add Customer' tab. " +
+            "4) Enter valid First Name and Last Name. " +
+            "5) Enter 'ABCDEF' in Post Code field. " +
+            "6) Click 'Add Customer' button. " +
+            "7) Observe: alert says 'Customer added successfully' — non-numeric postal code was accepted.")
     @DisplayName("M4 - Postal code should reject non-numeric")
     void testPostalCodeRejectsNonNumeric() {
         goToManagerDashboard();
