@@ -110,7 +110,7 @@ jobs:
               while IFS= read -r line; do
                 if echo "$line" | grep -q '<failure'; then
                   TESTNAME=$(echo "$prev_line" | sed 's/.*name="\([^"]*\)".*/\1/')
-                  FAILMSG=$(echo "$line" | sed 's/.*message="\([^"]*\)".*/\1/' | head -c 100)
+                  FAILMSG=$(echo "$line" | sed 's/.*message="\([^"]*\)".*/\1/' | sed 's/</\&lt;/g; s/>/\&gt;/g' | head -c 100)
                   FAILED_DETAILS="${FAILED_DETAILS}<li><b>${TESTNAME}</b><br/>${FAILMSG}</li>"
                   FAILED_SLACK="${FAILED_SLACK}• ${TESTNAME}\n"
                 fi
@@ -243,8 +243,16 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
+                    "text": "*🐛 Failed Tests:*\n${{ steps.test-results.outputs.failed_slack }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
                     "text": "*⏭️ Skipped/Disabled Tests:*\n${{ steps.test-results.outputs.skipped_slack }}"
                   }
+                },
                 },
                 {
                   "type": "actions",
