@@ -104,19 +104,24 @@ jobs:
             fi
 
             # Extract failed test names
-            FAILED_DETAILS=""
+           FAILED_DETAILS=""
             FAILED_SLACK=""
-            for xml in target/surefire-reports/TEST-*.xml; do
-              while IFS= read -r line; do
-                if echo "$line" | grep -q '<failure'; then
-                  TESTNAME=$(echo "$prev_line" | sed 's/.*name="\([^"]*\)".*/\1/')
-                  FAILMSG=$(echo "$line" | sed 's/.*message="\([^"]*\)".*/\1/' | sed 's/</\&lt;/g; s/>/\&gt;/g' | head -c 100)
-                  FAILED_DETAILS="${FAILED_DETAILS}<li><b>${TESTNAME}</b><br/>${FAILMSG}</li>"
-                  FAILED_SLACK="${FAILED_SLACK}• ${TESTNAME}\n"
+            if [ -d "target/allure-results" ]; then
+              for json in target/allure-results/*-result.json; do
+                [ -f "$json" ] || continue
+                STATUS=$(jq -r '.status // empty' "$json" 2>/dev/null)
+                if [ "$STATUS" = "failed" ]; then
+                  NAME=$(jq -r '.name // empty' "$json")
+                  DESC=$(jq -r '.description // empty' "$json" | head -c 300)
+                  MSG=$(jq -r '.statusDetails.message // empty' "$json" | head -c 200)
+                  DESC_HTML=$(echo "$DESC" | sed 's/</\&lt;/g; s/>/\&gt;/g')
+                  MSG_HTML=$(echo "$MSG" | sed 's/</\&lt;/g; s/>/\&gt;/g')
+                  FAILED_DETAILS="${FAILED_DETAILS}<li><b>${NAME}</b><br/>${DESC_HTML}<br/><i>${MSG_HTML}</i></li>"
+                  DESC_SLACK=$(echo "$DESC" | tr '"' "'" | tr '\n' ' ' | head -c 200)
+                  FAILED_SLACK="${FAILED_SLACK}• ${NAME}\n  ${DESC_SLACK}\n"
                 fi
-                prev_line="$line"
-              done < "$xml"
-            done
+              done
+            fi
 
             if [ -z "$FAILED_DETAILS" ]; then
               FAILED_DETAILS="<li>All tests passed!</li>"
