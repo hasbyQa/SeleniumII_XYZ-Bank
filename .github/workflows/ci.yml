@@ -112,13 +112,25 @@ jobs:
                 STATUS=$(jq -r '.status // empty' "$json" 2>/dev/null)
                 if [ "$STATUS" = "failed" ]; then
                   NAME=$(jq -r '.name // empty' "$json")
-                  DESC=$(jq -r '.description // empty' "$json" | head -c 300)
-                  MSG=$(jq -r '.statusDetails.message // empty' "$json" | head -c 200)
+                  DESC=$(jq -r '.description // empty' "$json")
+                  MSG=$(jq -r '.statusDetails.message // empty' "$json")
+
+                  # HTML: structure with line breaks between sections
                   DESC_HTML=$(echo "$DESC" | sed 's/</\&lt;/g; s/>/\&gt;/g')
                   MSG_HTML=$(echo "$MSG" | sed 's/</\&lt;/g; s/>/\&gt;/g')
-                  FAILED_DETAILS="${FAILED_DETAILS}<li><b>${NAME}</b><br/>${DESC_HTML}<br/><i>${MSG_HTML}</i></li>"
-                  DESC_SLACK=$(echo "$DESC" | tr '"' "'" | tr '\n' ' ' | head -c 200)
-                  FAILED_SLACK="${FAILED_SLACK}• ${NAME}\n  ${DESC_SLACK}\n"
+                  DESC_HTML=$(echo "$DESC_HTML" | sed 's/Severity:/<br\/><b>Severity:<\/b>/; s/Expected:/<br\/><b>Expected:<\/b>/; s/Actual:/<br\/><b>Actual:<\/b>/; s/Steps:/<br\/><b>Steps:<\/b>/')
+                  DESC_HTML=$(echo "$DESC_HTML" | sed 's/\([0-9])\)/<br\/>\1/g')
+                  FAILED_DETAILS="${FAILED_DETAILS}<li><b>${NAME}</b><br/>${DESC_HTML}<br/><br/><i>Result: ${MSG_HTML}</i></li>"
+
+                  # Slack: structured with newlines
+                  DESC_CLEAN=$(echo "$DESC" | tr '"' "'" | tr '\n' ' ')
+                  BUGID=$(echo "$DESC_CLEAN" | sed -n 's/\(BUG-[0-9]*\).*/\1/p')
+                  SEV=$(echo "$DESC_CLEAN" | sed -n 's/.*Severity: \([^ |]*\).*/\1/p')
+                  PRI=$(echo "$DESC_CLEAN" | sed -n 's/.*Priority: \([^ |]*\).*/\1/p')
+                  EXP=$(echo "$DESC_CLEAN" | sed -n 's/.*Expected: \([^.]*\)\..*/\1/p')
+                  ACT=$(echo "$DESC_CLEAN" | sed -n "s/.*Actual: \([^.]*\)\..*/\1/p")
+                  STEPS=$(echo "$DESC_CLEAN" | sed -n 's/.*Steps: //p' | head -c 500)
+                  FAILED_SLACK="${FAILED_SLACK}• *${NAME}* [${BUGID}]\n  Severity: ${SEV} | Priority: ${PRI}\n  Expected: ${EXP}\n  Actual: ${ACT}\n  Steps: ${STEPS}\n\n"
                 fi
               done
             fi
