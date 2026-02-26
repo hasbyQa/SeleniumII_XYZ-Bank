@@ -1,6 +1,11 @@
 package com.hasby.xyzbank.base;
 
-import com.hasby.xyzbank.pages.*;
+import com.hasby.xyzbank.pages.common.HomePage;
+import com.hasby.xyzbank.pages.customer.*;
+import com.hasby.xyzbank.pages.manager.AddCustomerPage;
+import com.hasby.xyzbank.pages.manager.CustomersPage;
+import com.hasby.xyzbank.pages.manager.ManagerDashboardPage;
+import com.hasby.xyzbank.pages.manager.OpenAccountPage;
 import com.hasby.xyzbank.utils.ScreenshotExtension;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.junit.jupiter.api.AfterEach;
@@ -33,10 +38,10 @@ public abstract class BaseTest {
     protected TransactionsPage transactionsPage;
 
     private static WebDriver createDriver() {
-        WebDriverManager.chromedriver().setup();
+//        WebDriverManager.chromedriver().setup();
 
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless=new");
+//        options.addArguments("--headless=new");
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
         options.addArguments("--window-size=1920,1080");

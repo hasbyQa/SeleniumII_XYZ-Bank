@@ -1,4 +1,4 @@
-package com.hasby.xyzbank.pages;
+package com.hasby.xyzbank.pages.customer;
 
 import io.qameta.allure.Step;
 import org.openqa.selenium.WebDriver;
